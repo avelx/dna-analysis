@@ -1,6 +1,8 @@
 package com.binf.tests
 
 import org.scalatest.FunSuite
+import org.scalatest.Matchers._
+
 
 class FunBaseSpec extends FunSuite {
 
@@ -31,6 +33,18 @@ class FunBaseSpec extends FunSuite {
     assert( computingFreq("ACGCGGCTCTGAAA") sameElements  Array(2, 1, 0, 0, 0, 0, 2, 2, 1, 2, 1, 0 ,0, 1, 1, 0) )
   }
 
+  test("numberToPattern('AGTC')" )
+  {
+    implicit val k: Int = 4
+    assert( numberToPattern(45) == "AGTC")
+  }
 
+  test("reverse complement of AAAACCCGGT") {
+    assert( reverseComplement("AAAACCCGGT") == "ACCGGGTTTT")
+  }
+
+  test("pattern match for ATAT in GATATATGCATATACTT") {
+    assert( patternIndecs("ATAT", "GATATATGCATATACTT") == List(1, 3, 9) )
+  }
 }
 
