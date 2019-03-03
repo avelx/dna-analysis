@@ -1,6 +1,5 @@
 package com.binf
 
-import scala.collection.mutable.ListBuffer
 
 object Fun {
   private val alphabet = "ACGT"
@@ -63,4 +62,28 @@ object Fun {
     patternIndecsAcc(0, List() )
       .reverse
   }
+
+  def clumpFinding(genome: String, k: Int, L: Int, t: Int) : Seq[String] = ???
+
+  def skew(genome: String) : List[Int] = {
+    def skewAcc(g: List[Char], acc: List[Int], state: Int) : List[Int] = g match {
+      case h::tail => h match {
+        case 'C' => skewAcc(tail, acc :+ (state - 1), state - 1 )
+        case 'T' => skewAcc(tail, acc :+ state, state  )
+        case 'A' => skewAcc(tail, acc :+ state, state)
+        case 'G' => skewAcc(tail, acc :+ (state + 1), state + 1 )
+      }
+      case Nil => acc
+    }
+    skewAcc(genome.toList, List(0), 0)
+  }
+
+  def skewMin(genome: String): List[Int] = {
+    val ss = skew(genome)
+    val ssWithIndex = ss.zipWithIndex
+    val minVal = ssWithIndex.minBy(_._1)._1
+    ssWithIndex.foldLeft( List[Int]() )( (a, b) => if (b._1 == minVal) a :+ b._2 else a)
+  }
+
+
 }

@@ -1,8 +1,6 @@
 package com.binf.tests
 
 import org.scalatest.FunSuite
-import org.scalatest.Matchers._
-
 
 class FunBaseSpec extends FunSuite {
 
@@ -46,5 +44,15 @@ class FunBaseSpec extends FunSuite {
   test("pattern match for ATAT in GATATATGCATATACTT") {
     assert( patternIndecs("ATAT", "GATATATGCATATACTT") == List(1, 3, 9) )
   }
+
+  test("ClumpFunding" ) {
+    val genome = "CGGACTCGACAGATGTGAAGAACGACAATGTGAAGACTCGACACGACAGAGTGAAGAGAAGAGGAAACATTGTAA"
+    assert( clumpFinding(genome, 5, 50, 4) == List("CGACA", "GAAGA") )
+  }
+
+  test("skew(CATGGGCATCGGCCATACGCC)") {
+    assert( skew("CATGGGCATCGGCCATACGCC") == List(0, -1, -1, -1, 0, 1, 2, 1, 1, 1, 0, 1, 2, 1, 0, 0, 0, 0, -1, 0, -1, -2) )
+  }
+
 }
 
