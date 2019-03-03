@@ -54,5 +54,19 @@ class FunBaseSpec extends FunSuite {
     assert( skew("CATGGGCATCGGCCATACGCC") == List(0, -1, -1, -1, 0, 1, 2, 1, 1, 1, 0, 1, 2, 1, 0, 0, 0, 0, -1, 0, -1, -2) )
   }
 
+  test("skewMin(TAAAGACTGCCGAGAGGCCAACACGAGTGCTAGAACGAGGGGCGTAAACGCGGGTCCGAT)") {
+    assert( skewMin("TAAAGACTGCCGAGAGGCCAACACGAGTGCTAGAACGAGGGGCGTAAACGCGGGTCCGAT") == List(11, 24) )
+  }
+
+  test("hammingDistance('GGGCCGTTGGT', 'GGACCGTTGAC')") {
+    assert( hammingDistance("GGGCCGTTGGT", "GGACCGTTGAC") == 3)
+  }
+
+  test("approximateOccurrences") {
+    val pattern = "ATTCTGGA"
+    val genome = "CGCCCGAATCCAGAACGCATTCCCATATTTCGGGACCACTGGCCTCCACGGTACGGACGTCAATCAAAT"
+    assert( approximateOccurrences(genome, pattern, 3) == Seq(6, 7, 26, 27 ) )
+  }
+
 }
 
