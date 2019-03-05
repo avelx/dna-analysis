@@ -121,4 +121,37 @@ object Fun {
     result.distinct
   }
 
+  /* possibly contains wrong logic in kmers generation */
+  def freqWordsWithMismatches(genome: String, k: Int, d: Int): List[String] = {
+
+    def getKMers(index: Int, acc: List[String]): List[String] = {
+      val kmer = genome.drop(index).take(k)
+      if (kmer.length == k)
+        getKMers(index + 1, acc :+ kmer)
+      else
+        acc
+    }
+
+    val kmers = getKMers(0, List())
+
+
+    def getFreq(kMer: String, freq: Int, in: List[String]): Int = in match {
+      case h::tail => if ( hammingDistance(kMer, h) <= d) getFreq(kMer, freq + 1, tail) else getFreq(kMer, freq, tail)
+      case Nil => freq
+    }
+
+
+    val freq = collection.mutable.Map[String, Int]()
+
+    kmers
+      .distinct
+      .foreach(kmer => {
+        val f = getFreq(kmer, 0, kmers)
+        freq(kmer) = f
+      })
+
+    val r = freq.maxBy(_._2)
+    freq.toList.filter(_._2 == r._2).map(_._1)
+  }
+
 }
