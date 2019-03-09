@@ -122,7 +122,7 @@ object Fun {
   }
 
   /* possibly contains wrong logic in kmers generation */
-  def freqWordsWithMismatches(genome: String, k: Int, d: Int): List[String] = {
+  def freqWordsWithMismatches(genome: String, k: Int, d: Int, withReverse: Boolean = false): List[String] = {
 
     def getKMers(index: Int, acc: List[String]): List[String] = {
       val kmer = genome.drop(index).take(k)
@@ -143,15 +143,33 @@ object Fun {
 
     val freq = collection.mutable.Map[String, Int]()
 
-    kmers
-      .distinct
-      .foreach(kmer => {
-        val f = getFreq(kmer, 0, kmers)
-        freq(kmer) = f
-      })
+    if (!withReverse) {
 
-    val r = freq.maxBy(_._2)
-    freq.toList.filter(_._2 == r._2).map(_._1)
+      kmers
+        .distinct
+        .foreach(kmer => {
+          val f = getFreq(kmer, 0, kmers)
+          freq(kmer) = f
+        })
+
+      val r = freq.maxBy(_._2)
+      freq.toList.filter(_._2 == r._2).map(_._1)
+    } else {
+
+
+
+      kmers.distinct
+        .foreach(kmer => {
+          val f = getFreq(kmer, 0, kmers)
+          val fr = getFreq( reverseComplement(kmer), 0, kmers)
+          freq(kmer) = f + fr
+        })
+
+      val r = freq.maxBy(_._2)._2
+      println(r)
+      freq.toList.foreach(println)
+      freq.toList.filter(_._2 == r).map(_._1)
+    }
   }
 
 }
