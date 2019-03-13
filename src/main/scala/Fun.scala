@@ -1,5 +1,7 @@
 package com.binf
 
+import scala.collection.mutable.ListBuffer
+
 
 object Fun {
   private val alphabet = "ACGT"
@@ -102,23 +104,41 @@ object Fun {
 
   def approximatePatternCount(genome: String, pattern: String, d: Int): Int = ???
 
-  def neighbors(pattern: String, distance: Int): Seq[String] = {
-    val alphabet = "ACGT"
+//  def neighbors(pattern: String, distance: Int): Seq[String] = {
+//    val alphabet = "ACGT"
+//
+//    def neighborsAcc(acc: Seq[String]): Seq[String] =
+//      acc.map(p => {
+//        for {
+//          index <- (0 to p.length - 1)
+//          candidate <- alphabet.toList
+//          result = p.indices.map(i => if (i != index) p(i) else candidate)
+//        } yield result.mkString("")
+//      }).flatten
+//
+//    var result = Seq(pattern)
+//    for (i <- 0 to distance - 1) {
+//      result = neighborsAcc(result)
+//    }
+//    result.distinct
+//  }
 
-    def neighborsAcc(acc: Seq[String]): Seq[String] =
-      acc.map(p => {
-        for {
-          index <- (0 to p.length - 1)
-          candidate <- alphabet.toList
-          result = p.indices.map(i => if (i != index) p(i) else candidate)
-        } yield result.mkString("")
-      }).flatten
-
-    var result = Seq(pattern)
-    for (i <- 0 to distance - 1) {
-      result = neighborsAcc(result)
+  def neighbors(pattern: String, d: Int): Seq[String] = {
+    def suffix(s: String) : String = s.tail
+    def neighborsAcc(_d: Int, acc: Seq[String] ) = _d match {
+      case 0 => acc
+      case x => neighborsAcc()
     }
-    result.distinct
+
+  }
+
+  def immediateNeighbors(pattern: String) : Seq[String] = {
+    val nuclitides = Seq('A', 'C', 'T', 'G')
+    for {
+      i <- (0 to pattern.length - 1)
+      symbol <- pattern(i)
+      nucliotide <- nuclitides.filter(n => n != symbol)
+    } yield pattern.updated(i, symbol)
   }
 
   /* possibly contains wrong logic in kmers generation */
@@ -171,5 +191,7 @@ object Fun {
       freq.toList.filter(_._2 == r).map(_._1)
     }
   }
+
+  def motifEnumeration(DNA: Seq[String], k: Int, d: Int) : Seq[String] = ???
 
 }
