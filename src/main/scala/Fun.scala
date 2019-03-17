@@ -104,42 +104,55 @@ object Fun {
 
   def approximatePatternCount(genome: String, pattern: String, d: Int): Int = ???
 
-//  def neighbors(pattern: String, distance: Int): Seq[String] = {
-//    val alphabet = "ACGT"
+    def neighbors(pattern: String, distance: Int): Seq[String] = {
+      val alphabet = "ACGT"
+
+      def neighborsAcc(acc: Seq[String]): Seq[String] =
+        acc.map(p => {
+          for {
+            index <- (0 to p.length - 1)
+            candidate <- alphabet.toList
+            result = p.indices.map(i => if (i != index) p(i) else candidate)
+          } yield result.mkString("")
+        }).flatten
+
+      var result = Seq(pattern)
+      for (i <- 0 to distance - 1) {
+        result = neighborsAcc(result)
+      }
+      result.distinct
+    }
 //
-//    def neighborsAcc(acc: Seq[String]): Seq[String] =
-//      acc.map(p => {
-//        for {
-//          index <- (0 to p.length - 1)
-//          candidate <- alphabet.toList
-//          result = p.indices.map(i => if (i != index) p(i) else candidate)
-//        } yield result.mkString("")
-//      }).flatten
+//  def neighbors(pattern: String, d: Int): Seq[String] = {
+//    def suffix(s: String): String = s.tail
 //
-//    var result = Seq(pattern)
-//    for (i <- 0 to distance - 1) {
-//      result = neighborsAcc(result)
+//    if (d == 0)
+//      Seq(pattern)
+//    else if (pattern.length == 1)
+//      Seq("ACGT")
+//    else {
+//      var neighborhood : Set[String] = Set()
+//      val suffixNeighbors = neighbors(suffix(pattern), d)
+//      suffixNeighbors.map(text => {
+//        if (hammingDistance(suffix(pattern), text) <= d)
+//          Seq('A', 'C', 'G', 'T').map(x => {
+//            neighborhood = neighborhood + (x + text)
+//          })
+//        else
+//          neighborhood = neighborhood + (pattern.head + text)
+//      })
+//      neighborhood.toSeq
 //    }
-//    result.distinct
 //  }
 
-  def neighbors(pattern: String, d: Int): Seq[String] = {
-    def suffix(s: String) : String = s.tail
-    def neighborsAcc(_d: Int, acc: Seq[String] ) = _d match {
-      case 0 => acc
-      case x => neighborsAcc()
-    }
-
-  }
-
-  def immediateNeighbors(pattern: String) : Seq[String] = {
-    val nuclitides = Seq('A', 'C', 'T', 'G')
-    for {
-      i <- (0 to pattern.length - 1)
-      symbol <- pattern(i)
-      nucliotide <- nuclitides.filter(n => n != symbol)
-    } yield pattern.updated(i, symbol)
-  }
+  //  def immediateNeighbors(pattern: String) : Seq[String] = {
+  //    val nuclitides = Seq('A', 'C', 'T', 'G')
+  //    for {
+  //      i <- (0 to pattern.length - 1)
+  //      symbol <- pattern(i)
+  //      nucleotide <- nuclitides.filter(n => n != symbol)
+  //    } yield pattern.updated(i, nucleotide)
+  //  }
 
   /* possibly contains wrong logic in kmers generation */
   def freqWordsWithMismatches(genome: String, k: Int, d: Int, withReverse: Boolean = false): List[String] = {
@@ -156,7 +169,7 @@ object Fun {
 
 
     def getFreq(kMer: String, freq: Int, in: List[String]): Int = in match {
-      case h::tail => if ( hammingDistance(kMer, h) <= d) getFreq(kMer, freq + 1, tail) else getFreq(kMer, freq, tail)
+      case h :: tail => if (hammingDistance(kMer, h) <= d) getFreq(kMer, freq + 1, tail) else getFreq(kMer, freq, tail)
       case Nil => freq
     }
 
@@ -177,11 +190,10 @@ object Fun {
     } else {
 
 
-
       kmers.distinct
         .foreach(kmer => {
           val f = getFreq(kmer, 0, kmers)
-          val fr = getFreq( reverseComplement(kmer), 0, kmers)
+          val fr = getFreq(reverseComplement(kmer), 0, kmers)
           freq(kmer) = f + fr
         })
 
@@ -192,6 +204,39 @@ object Fun {
     }
   }
 
-  def motifEnumeration(DNA: Seq[String], k: Int, d: Int) : Seq[String] = ???
+  def patterns(s: String)(implicit k: Int ) : Seq[String] = {
+    val result = new ListBuffer[String]()
+    s.foldLeft(Seq[Char]())((r, c) => {
+      if (r.length == k) {
+        result.append(r.mkString(""))
+        r.tail :+ c
+      } else {
+        r :+ c
+      }
+    })
+    (result :+ s.takeRight(k)).distinct
+  }
+
+  def motifEnumeration(DNA: Seq[String], k: Int, d: Int): Seq[String] = {
+    val ps = new ListBuffer[String]()
+    val allPatterns = DNA.map(patterns(_)(k)).flatten.distinct
+    allPatterns.foreach(pn => {
+      val pnWithNB = neighbors(pn, d).filter(_ != pn)
+      pnWithNB.foreach(p => {
+        val res = DNA.forall(str => {
+          val stR = patterns(str)(k)
+          stR.find(x => hammingDistance(x,p) <= d ).isDefined
+        })
+        if (res)
+          ps.append(p)
+        //val rr = DNA.forall(s => patterns(s)(k).exists(dd => if (hammingDistance(dd, p) < d) true else false ))
+        //if (rr)
+        //  ps.append(p)
+        //rr.flatten.map(dd => if (hammingDistance(dd, p) < d) ps.append(dd) )
+      })
+        //if ( DNA.exists(dna => patterns(dna)(k).exists(dd => if (hammingDistance(dna, p) < d) ) ps.append(dd)  )
+    })
+    ps.distinct
+  }
 
 }
