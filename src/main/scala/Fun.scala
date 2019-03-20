@@ -122,37 +122,6 @@ object Fun {
       }
       result.distinct
     }
-//
-//  def neighbors(pattern: String, d: Int): Seq[String] = {
-//    def suffix(s: String): String = s.tail
-//
-//    if (d == 0)
-//      Seq(pattern)
-//    else if (pattern.length == 1)
-//      Seq("ACGT")
-//    else {
-//      var neighborhood : Set[String] = Set()
-//      val suffixNeighbors = neighbors(suffix(pattern), d)
-//      suffixNeighbors.map(text => {
-//        if (hammingDistance(suffix(pattern), text) <= d)
-//          Seq('A', 'C', 'G', 'T').map(x => {
-//            neighborhood = neighborhood + (x + text)
-//          })
-//        else
-//          neighborhood = neighborhood + (pattern.head + text)
-//      })
-//      neighborhood.toSeq
-//    }
-//  }
-
-  //  def immediateNeighbors(pattern: String) : Seq[String] = {
-  //    val nuclitides = Seq('A', 'C', 'T', 'G')
-  //    for {
-  //      i <- (0 to pattern.length - 1)
-  //      symbol <- pattern(i)
-  //      nucleotide <- nuclitides.filter(n => n != symbol)
-  //    } yield pattern.updated(i, nucleotide)
-  //  }
 
   /* possibly contains wrong logic in kmers generation */
   def freqWordsWithMismatches(genome: String, k: Int, d: Int, withReverse: Boolean = false): List[String] = {
@@ -238,5 +207,22 @@ object Fun {
     })
     ps.distinct
   }
+
+  def distanceBetweenPatternAndString(pattern: String, dna: Seq[String]) : Int = {
+    val k = pattern.length
+    var distance : Int = 0
+    dna.foreach(text => {
+      var hd = Int.MaxValue
+      val ps = patterns(text)(k)
+      ps.foreach(p => {
+        val h = hammingDistance(pattern, p)
+        if (hd > h) hd = h
+      } )
+      distance += hd
+    })
+    distance
+  }
+
+  def medianString(dna: String, k: Int) : String = ???
 
 }
