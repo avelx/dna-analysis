@@ -104,24 +104,24 @@ object Fun {
 
   def approximatePatternCount(genome: String, pattern: String, d: Int): Int = ???
 
-    def neighbors(pattern: String, distance: Int): Seq[String] = {
-      val alphabet = "ACGT"
+  def neighbors(pattern: String, distance: Int): Seq[String] = {
+    val alphabet = "ACGT"
 
-      def neighborsAcc(acc: Seq[String]): Seq[String] =
-        acc.map(p => {
-          for {
-            index <- (0 to p.length - 1)
-            candidate <- alphabet.toList
-            result = p.indices.map(i => if (i != index) p(i) else candidate)
-          } yield result.mkString("")
-        }).flatten
+    def neighborsAcc(acc: Seq[String]): Seq[String] =
+      acc.map(p => {
+        for {
+          index <- (0 to p.length - 1)
+          candidate <- alphabet.toList
+          result = p.indices.map(i => if (i != index) p(i) else candidate)
+        } yield result.mkString("")
+      }).flatten
 
-      var result = Seq(pattern)
-      for (i <- 0 to distance - 1) {
-        result = neighborsAcc(result)
-      }
-      result.distinct
+    var result = Seq(pattern)
+    for (i <- 0 to distance - 1) {
+      result = neighborsAcc(result)
     }
+    result.distinct
+  }
 
   /* possibly contains wrong logic in kmers generation */
   def freqWordsWithMismatches(genome: String, k: Int, d: Int, withReverse: Boolean = false): List[String] = {
@@ -173,7 +173,7 @@ object Fun {
     }
   }
 
-  def patterns(s: String)(implicit k: Int ) : Seq[String] = {
+  def patterns(s: String)(implicit k: Int): Seq[String] = {
     val result = new ListBuffer[String]()
     s.foldLeft(Seq[Char]())((r, c) => {
       if (r.length == k) {
@@ -194,7 +194,7 @@ object Fun {
       pnWithNB.foreach(p => {
         val res = DNA.forall(str => {
           val stR = patterns(str)(k)
-          stR.find(x => hammingDistance(x,p) <= d ).isDefined
+          stR.find(x => hammingDistance(x, p) <= d).isDefined
         })
         if (res)
           ps.append(p)
@@ -203,39 +203,54 @@ object Fun {
         //  ps.append(p)
         //rr.flatten.map(dd => if (hammingDistance(dd, p) < d) ps.append(dd) )
       })
-        //if ( DNA.exists(dna => patterns(dna)(k).exists(dd => if (hammingDistance(dna, p) < d) ) ps.append(dd)  )
+      //if ( DNA.exists(dna => patterns(dna)(k).exists(dd => if (hammingDistance(dna, p) < d) ) ps.append(dd)  )
     })
     ps.distinct
   }
 
-  def distanceBetweenPatternAndString(pattern: String, dna: Seq[String]) : Int = {
+  def distanceBetweenPatternAndString(pattern: String, dna: Seq[String]): Int = {
     val k = pattern.length
-    var distance : Int = 0
+    var distance: Int = 0
     dna.foreach(text => {
       var hd = Int.MaxValue
       val ps = patterns(text)(k)
       ps.foreach(p => {
         val h = hammingDistance(pattern, p)
         if (hd > h) hd = h
-      } )
+      })
       distance += hd
     })
     distance
   }
 
-  def medianString(dna: Seq[String], k: Int) : String = {
-    var distance : Int = Int.MaxValue
-    var median : String = ""
+  def medianString(dna: Seq[String], k: Int): String = {
+    var distance: Int = Int.MaxValue
+    var median: String = ""
     (0 to Math.pow(4, k).toInt - 1)
       .toList.map(i => {
-        val pattern = numberToPattern(i)(k)
-        val d = distanceBetweenPatternAndString(pattern, dna)
-        if ( distance > d) {
-          distance = d
-          median = pattern
-        }
+      val pattern = numberToPattern(i)(k)
+      val d = distanceBetweenPatternAndString(pattern, dna)
+      if (distance > d) {
+        distance = d
+        median = pattern
+      }
     })
     median
+  }
+
+  def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]]): String = {
+
+    def kMerProb(kmer: String): Double =
+      kmer.zipWithIndex.map(ci => {
+        val col = matrix.map(row => row(ci._2))
+        ci._1 match {
+          case 'A' => col(0)
+          case 'C' => col(1)
+          case 'G' => col(2)
+          case 'T' => col(3)
+        }
+      }).sum
+    patterns(dna)(k).map(p => (p, kMerProb(p))).maxBy(_._2)._1
   }
 
 }
