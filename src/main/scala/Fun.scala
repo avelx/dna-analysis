@@ -223,6 +223,19 @@ object Fun {
     distance
   }
 
-  def medianString(dna: String, k: Int) : String = ???
+  def medianString(dna: Seq[String], k: Int) : String = {
+    var distance : Int = Int.MaxValue
+    var median : String = ""
+    (0 to Math.pow(4, k).toInt - 1)
+      .toList.map(i => {
+        val pattern = numberToPattern(i)(k)
+        val d = distanceBetweenPatternAndString(pattern, dna)
+        if ( distance > d) {
+          distance = d
+          median = pattern
+        }
+    })
+    median
+  }
 
 }
