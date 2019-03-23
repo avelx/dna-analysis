@@ -1,6 +1,7 @@
 package com.binf
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 
 object Fun {
@@ -251,6 +252,17 @@ object Fun {
         }
       }).sum
     patterns(dna)(k).map(p => (p, kMerProb(p))).maxBy(_._2)._1
+  }
+
+  def pr(matrix: Array[Array[Double]], profile: String): Double = {
+    val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
+    val profileAsPos = profile.map(n => pos(n) ).toList
+    profileAsPos
+      .zipWithIndex.map(p => matrix(p._1)(p._2)).foldLeft(1.0)( (a, v) => if (v == 0.0) a else (a * v) )
+  }
+
+  def entroty(matrix: Array[Array[Double]]): Array[Double] = {
+    matrix.map(col => - col.map(v => if (v != 0.0) v * Math.log(v) else 0.0 ).sum )
   }
 
 }
