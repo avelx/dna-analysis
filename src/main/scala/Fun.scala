@@ -302,10 +302,12 @@ object Fun {
   //  }
 
 
-  def score(motif: Seq[String]): Double = ???
+  def score(motif: Seq[String]): Double = {
+    val consensus = medianString(motif, motif(0).length )
+    distanceBetweenPatternAndString(consensus, motif)
+  }
 
-
-    def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
+  def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
       val kMers: Seq[String] = dna.map(s => patterns(s)(k)).flatten
       val kMersLen = kMers.length
 
@@ -315,10 +317,12 @@ object Fun {
       })
 
       var found = false
-      while (1 == 1) {
+      while (found == false) {
         val matrix = profiler(bestMotif)
         val motifs = motifer(dna, k, matrix)
-        if (score(motifs) < score(bestMotif))
+        val sm = score(motifs)
+        val sb = score(bestMotif)
+        if (sm < sb)
           bestMotif = motifs
         else
           found = true
