@@ -1,7 +1,7 @@
 package com.binf
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
+import scala.util.{Random, Try}
 
 
 object Fun {
@@ -241,28 +241,89 @@ object Fun {
 
   def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]]): String = {
 
-    def kMerProb(kmer: String): Double =
-      kmer.zipWithIndex.map(ci => {
-        val col = matrix.map(row => row(ci._2))
-        ci._1 match {
-          case 'A' => col(0)
-          case 'C' => col(1)
-          case 'G' => col(2)
-          case 'T' => col(3)
-        }
-      }).sum
-    patterns(dna)(k).map(p => (p, kMerProb(p))).maxBy(_._2)._1
+    //    def kMerProb(kmer: String): Double =
+    //      kmer.zipWithIndex.map(ci => {
+    //        val col = matrix.map(row => row(ci._2))
+    //        ci._1 match {
+    //          case 'A' => col(0)
+    //          case 'C' => col(1)
+    //          case 'G' => col(2)
+    //          case 'T' => col(3)
+    //        }
+    //      }).sum
+
+    val psK = patterns(dna)(k)
+    val r : Seq[(Double, String)] = psK.map(ps => {
+      (ps.zipWithIndex.map(si => si._1 match {
+          case 'A' => matrix(0)(si._2)
+          case 'C' => matrix(1)(si._2)
+          case 'G' => matrix(2)(si._2)
+          case 'T' => matrix(3)(si._2)
+        }).sum, ps)
+    })
+
+    r.sortWith(_._1 > _._1).head._2
   }
+
+  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]]): Seq[String] = dna.map(s => profileMostProbableKmer(s, k, matrix))
 
   def pr(matrix: Array[Array[Double]], profile: String): Double = {
     val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
-    val profileAsPos = profile.map(n => pos(n) ).toList
+    val profileAsPos = profile.toUpperCase().map(n => pos(n)).toList
     profileAsPos
-      .zipWithIndex.map(p => matrix(p._1)(p._2)).foldLeft(1.0)( (a, v) => if (v == 0.0) a else (a * v) )
+      .zipWithIndex.map(p => matrix(p._1)(p._2)).foldLeft(1.0)((a, v) => if (v == 0.0) a else (a * v))
   }
 
   def entroty(matrix: Array[Array[Double]]): Array[Double] = {
-    matrix.map(col => - col.map(v => if (v != 0.0) v * Math.log(v) else 0.0 ).sum )
+    matrix.map(col => -col.map(v => if (v != 0.0) v * Math.log(v) else 0.0).sum)
   }
+
+
+  def profiler(motif: Seq[String]): Array[Array[Double]] = {
+    //val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
+    val l = motif(0).length
+    val cols: Array[String] = (0 to l - 1).map(i => motif.map(s => s(i)).mkString("")).toArray
+    val cs = cols.map(c => c.foldLeft(Map[Char, Int]('A' -> 0, 'C' -> 0, 'G' -> 0, 'T' -> 0))((acc, s) => acc + (s -> (acc(s) + 1))))
+
+    val count = cols(0).length
+    val res = cs.map(_.values.map(x => (x.toDouble / count.toDouble))
+      .toArray[Double])
+
+    (0 to 3).map(i => res.map(r => r(i))).toArray
+  }
+
+  //  def motifer(matrix: Array[Array[Double]], dna: Seq[String], k: Int): Seq[String] = {
+  //    val r1 = dna
+  //      .map(s => patterns(s)(k))
+  //
+  //    val r2: Seq[Seq[(String, Double)]] = r1.map(ss => ss.map(pf => (pf, pr(matrix, pf))))
+  //
+  //    r2.map(_.sortWith(_._2 < _._2).head._1.toUpperCase)
+  //  }
+
+
+  def score(motif: Seq[String]): Double = ???
+
+
+    def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
+      val kMers: Seq[String] = dna.map(s => patterns(s)(k)).flatten
+      val kMersLen = kMers.length
+
+      var bestMotif: Seq[String] = (0 to t - 1).map(_ => {
+        val index = Random.nextInt(kMers.length)
+        kMers(index)
+      })
+
+      var found = false
+      while (1 == 1) {
+        val matrix = profiler(bestMotif)
+        val motifs = motifer(dna, k, matrix)
+        if (score(motifs) < score(bestMotif))
+          bestMotif = motifs
+        else
+          found = true
+      }
+      bestMotif
+    }
 
 }
