@@ -113,5 +113,27 @@ class FunBaseSpec extends FunSuite {
     assert(res === expected)
   }
 
+  test("count motifs"){
+    val dna = Seq(
+      "ACCT",
+      "ATGT"
+    )
+
+  }
+
+  test("Consensus string") {
+    val dna = Seq(
+      "ttaccttaac",
+      "gatgtctgtc",
+      "acggcgttag",
+      "ccctaacgag",
+      "cgtcgagaggt"
+    ).map(_.toUpperCase())
+
+    val expected = "CCTCCATAAG".toUpperCase
+    val res = consensusString(dna)
+    assert(res == expected)
+  }
+
 }
 

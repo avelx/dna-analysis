@@ -259,13 +259,14 @@ object Fun {
           case 'C' => matrix(1)(si._2)
           case 'G' => matrix(2)(si._2)
           case 'T' => matrix(3)(si._2)
-        }).sum, ps)
+        }).foldLeft(1.toDouble)( (acc, c) => acc * c), ps)
     })
 
     r.sortWith(_._1 > _._1).head._2
   }
 
-  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]]): Seq[String] = dna.map(s => profileMostProbableKmer(s, k, matrix))
+  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]]): Seq[String] =
+    dna.map(s => profileMostProbableKmer(s, k, matrix))
 
   def pr(matrix: Array[Array[Double]], profile: String): Double = {
     val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
@@ -302,11 +303,24 @@ object Fun {
   //  }
 
 
+  def consensusString(motif: Seq[String]) : String = {
+    val l = motif(0).length
+    val cols: Array[String] = (0 to l - 1).map(i => motif.map(s => s(i)).mkString("")).toArray
+    val cs = cols.map(c => c.foldLeft(Map[Char, Int]('A' -> 0, 'C' -> 0, 'G' -> 0, 'T' -> 0))((acc, s) => acc + (s -> (acc(s) + 1))))
+    cs.map(_.toList.maxBy(_._2)).map(_._1).mkString("")
+  }
+
   def score(motif: Seq[String]): Double = {
-    val consensus = medianString(motif, motif(0).length )
+    val consensus = consensusString(motif)
     distanceBetweenPatternAndString(consensus, motif)
   }
 
+  def count(motif: Seq[String]) : Array[Array[Int]] = {
+    val l = motif(0).length
+    val cols: Array[String] = (0 to l - 1).map(i => motif.map(s => s(i)).mkString("")).toArray
+    val cs = cols.map(c => c.foldLeft(Map[Char, Int]('A' -> 0, 'C' -> 0, 'G' -> 0, 'T' -> 0))((acc, s) => acc + (s -> (acc(s) + 1))))
+    cs.map(_.values.toArray)
+  }
 
   def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
       val kMers: Seq[Seq[String]] = dna.map(s => patterns(s)(k))
