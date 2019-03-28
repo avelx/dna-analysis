@@ -14,7 +14,7 @@ object Runner {
     )
     val res = randomizeMotifeSearch(dna, 8, 5)
 
-    println(res.mkString(" "))
+    println(res.mkString("\n"))
     //
     //    val matrix = Array(
     //      Array(0.4, 0.3, 0.0, 0.1, 0.0, 0.9),

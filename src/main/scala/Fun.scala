@@ -307,13 +307,13 @@ object Fun {
     distanceBetweenPatternAndString(consensus, motif)
   }
 
-  def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
-      val kMers: Seq[String] = dna.map(s => patterns(s)(k)).flatten
-      val kMersLen = kMers.length
 
-      var bestMotif: Seq[String] = (0 to t - 1).map(_ => {
-        val index = Random.nextInt(kMers.length)
-        kMers(index)
+  def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
+      val kMers: Seq[Seq[String]] = dna.map(s => patterns(s)(k))
+      val kMersLen = kMers(0).length
+      var bestMotif: Seq[String] = (0 to t - 1).map(r => {
+        val c = Random.nextInt(kMersLen)
+        kMers(r)(c)
       })
 
       var found = false
