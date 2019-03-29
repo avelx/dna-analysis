@@ -239,18 +239,7 @@ object Fun {
     median
   }
 
-  def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]]): String = {
-
-    //    def kMerProb(kmer: String): Double =
-    //      kmer.zipWithIndex.map(ci => {
-    //        val col = matrix.map(row => row(ci._2))
-    //        ci._1 match {
-    //          case 'A' => col(0)
-    //          case 'C' => col(1)
-    //          case 'G' => col(2)
-    //          case 'T' => col(3)
-    //        }
-    //      }).sum
+  def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]])(t : Int = 1): Seq[String] = {
 
     val psK = patterns(dna)(k)
     val r : Seq[(Double, String)] = psK.map(ps => {
@@ -262,11 +251,11 @@ object Fun {
         }).foldLeft(1.toDouble)( (acc, c) => acc * c), ps)
     })
 
-    r.sortWith(_._1 > _._1).head._2
+    r.sortWith(_._1 > _._1).take(t).map(_._2)
   }
 
-  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]]): Seq[String] =
-    dna.map(s => profileMostProbableKmer(s, k, matrix))
+  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]])(t: Int): Seq[Seq[String]] =
+    dna.map(s => profileMostProbableKmer(s, k, matrix)(t) )
 
   def pr(matrix: Array[Array[Double]], profile: String): Double = {
     val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
@@ -282,12 +271,11 @@ object Fun {
 
   def profiler(motif: Seq[String]): Array[Array[Double]] = {
     //val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
-    val l = motif(0).length
+    val (l, n) = (motif(0).length, motif.length)
     val cols: Array[String] = (0 to l - 1).map(i => motif.map(s => s(i)).mkString("")).toArray
     val cs = cols.map(c => c.foldLeft(Map[Char, Int]('A' -> 0, 'C' -> 0, 'G' -> 0, 'T' -> 0))((acc, s) => acc + (s -> (acc(s) + 1))))
-
-    val count = cols(0).length
-    val res = cs.map(_.values.map(x => (x.toDouble / count.toDouble))
+    val res = cs
+      .map(_.values.map(x => ( (x + 1).toDouble / (n * 2).toDouble))
       .toArray[Double])
 
     (0 to 3).map(i => res.map(r => r(i))).toArray
@@ -310,9 +298,9 @@ object Fun {
     cs.map(_.toList.maxBy(_._2)).map(_._1).mkString("")
   }
 
-  def score(motif: Seq[String]): Double = {
+  def score(motif: Seq[String]): Int = {
     val consensus = consensusString(motif)
-    distanceBetweenPatternAndString(consensus, motif)
+    motif.map(m => hammingDistance(m, consensus)).sum
   }
 
   def count(motif: Seq[String]) : Array[Array[Int]] = {
@@ -325,23 +313,18 @@ object Fun {
   def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
       val kMers: Seq[Seq[String]] = dna.map(s => patterns(s)(k))
       val kMersLen = kMers(0).length
-      var bestMotif: Seq[String] = (0 to t - 1).map(r => {
-        val c = Random.nextInt(kMersLen)
-        kMers(r)(c)
-      })
-
-      var found = false
-      while (found == false) {
-        val matrix = profiler(bestMotif)
-        val motifs = motifer(dna, k, matrix)
-        val sm = score(motifs)
-        val sb = score(bestMotif)
+      var bestMotif: Seq[Seq[String]] = kMers.map(km => (0 to t - 1).map(_ => km( Random.nextInt(kMersLen) ) ) )
+      var counter: Int = 0
+      while (counter <= 1000) {
+        val matrix = profiler(bestMotif.flatten)
+        val motifs = motifer(dna, k, matrix)(t)
+        val sm = score(motifs.flatten)
+        val sb = score(bestMotif.flatten)
         if (sm < sb)
           bestMotif = motifs
-        else
-          found = true
+        counter += 1
       }
-      bestMotif
+      bestMotif.flatten
     }
 
 }
