@@ -108,7 +108,7 @@ class FunBaseSpec extends FunSuite {
       "aggt"
     ).map(_.toUpperCase())
 
-    val res = dna.map(d => profileMostProbableKmer(d.toUpperCase(), 4, matrix)(1))
+    val res = dna.map(d => profileMostProbableKmer(d.toUpperCase(), 4, matrix))
 
     assert(res === expected)
   }

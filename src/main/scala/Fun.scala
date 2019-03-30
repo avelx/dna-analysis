@@ -239,7 +239,7 @@ object Fun {
     median
   }
 
-  def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]])(t : Int = 1): Seq[String] = {
+  def profileMostProbableKmer(dna: String, k: Int, matrix: Array[Array[Double]]): String = {
 
     val psK = patterns(dna)(k)
     val r : Seq[(Double, String)] = psK.map(ps => {
@@ -251,11 +251,13 @@ object Fun {
         }).foldLeft(1.toDouble)( (acc, c) => acc * c), ps)
     })
 
-    r.sortWith(_._1 > _._1).take(t).map(_._2)
+    val res = r.sortWith(_._1 > _._1)
+
+    res.head._2
   }
 
-  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]])(t: Int): Seq[Seq[String]] =
-    dna.map(s => profileMostProbableKmer(s, k, matrix)(t) )
+  def motifer(dna: Seq[String], k: Int, matrix: Array[Array[Double]]): Seq[String] =
+    dna.map(s => profileMostProbableKmer(s, k, matrix) )
 
   def pr(matrix: Array[Array[Double]], profile: String): Double = {
     val pos: Map[Char, Int] = Map('A' -> 0, 'C' -> 1, 'G' -> 2, 'T' -> 3)
@@ -275,20 +277,11 @@ object Fun {
     val cols: Array[String] = (0 to l - 1).map(i => motif.map(s => s(i)).mkString("")).toArray
     val cs = cols.map(c => c.foldLeft(Map[Char, Int]('A' -> 0, 'C' -> 0, 'G' -> 0, 'T' -> 0))((acc, s) => acc + (s -> (acc(s) + 1))))
     val res = cs
-      .map(_.values.map(x => ( (x + 1).toDouble / (n * 2).toDouble))
+      .map(_.values.map(x => ( (x + 1).toDouble / (n + 4).toDouble))
       .toArray[Double])
 
     (0 to 3).map(i => res.map(r => r(i))).toArray
   }
-
-  //  def motifer(matrix: Array[Array[Double]], dna: Seq[String], k: Int): Seq[String] = {
-  //    val r1 = dna
-  //      .map(s => patterns(s)(k))
-  //
-  //    val r2: Seq[Seq[(String, Double)]] = r1.map(ss => ss.map(pf => (pf, pr(matrix, pf))))
-  //
-  //    r2.map(_.sortWith(_._2 < _._2).head._1.toUpperCase)
-  //  }
 
 
   def consensusString(motif: Seq[String]) : String = {
@@ -310,21 +303,30 @@ object Fun {
     cs.map(_.values.toArray)
   }
 
-  def randomizeMotifeSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
+  def randomizedMotifSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
       val kMers: Seq[Seq[String]] = dna.map(s => patterns(s)(k))
       val kMersLen = kMers(0).length
-      var bestMotif: Seq[Seq[String]] = kMers.map(km => (0 to t - 1).map(_ => km( Random.nextInt(kMersLen) ) ) )
-      var counter: Int = 0
-      while (counter <= 1000) {
-        val matrix = profiler(bestMotif.flatten)
-        val motifs = motifer(dna, k, matrix)(t)
-        val sm = score(motifs.flatten)
-        val sb = score(bestMotif.flatten)
-        if (sm < sb)
+      var bestMotif: Seq[String] = kMers.map(km => (0 to t - 1).map(_ => km( Random.nextInt(kMersLen) ) ) ).flatten
+      var found = false
+      while (found == false) {
+        val matrix = profiler(bestMotif)
+        val motifs = motifer(dna, k, matrix)
+        if (score(motifs) < score(bestMotif))
           bestMotif = motifs
-        counter += 1
+        else
+          found = true
       }
-      bestMotif.flatten
+      bestMotif
     }
+
+  def randomizedMotifSearchFull(dna: Seq[String], k: Int, t: Int)(times: Int = 1000) : Seq[String] = {
+    var bestMotif = randomizedMotifSearch(dna, k, t)
+    (0 to times - 1).foreach(_ => {
+      val motifs = randomizedMotifSearch(dna, k, t)
+      if (score(motifs) < score(bestMotif))
+        bestMotif = motifs
+    })
+    bestMotif
+  }
 
 }

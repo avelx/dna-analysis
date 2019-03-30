@@ -13,7 +13,7 @@ object Runner {
       "AATCCACCAGCTCCACGTGCAATGTTGGCCTA"
     )
 
-    val res = randomizeMotifeSearch(dna, 8, 5)
+    val res = randomizedMotifSearchFull(dna, 8, 5)(1000)
 
     println(res.mkString("\n"))
     //
