@@ -305,7 +305,7 @@ object Fun {
 
   def randomizedMotifSearch(dna: Seq[String], k: Int, t: Int): Seq[String] = {
       val kMers: Seq[Seq[String]] = dna.map(s => patterns(s)(k))
-      val kMersLen = kMers(0).length
+      val kMersLen = kMers(0).length - 1
       var bestMotif: Seq[String] = kMers.map(km => (0 to t - 1).map(_ => km( Random.nextInt(kMersLen) ) ) ).flatten
       var found = false
       while (found == false) {
@@ -321,10 +321,15 @@ object Fun {
 
   def randomizedMotifSearchFull(dna: Seq[String], k: Int, t: Int)(times: Int = 1000) : Seq[String] = {
     var bestMotif = randomizedMotifSearch(dna, k, t)
-    (0 to times - 1).foreach(_ => {
-      val motifs = randomizedMotifSearch(dna, k, t)
-      if (score(motifs) < score(bestMotif))
-        bestMotif = motifs
+    (0 to times - 1).foreach(i => {
+      Try {
+        println(s"Index: $i")
+        val motifs = randomizedMotifSearch(dna, k, t)
+        if (score(motifs) < score(bestMotif)) {
+          bestMotif = motifs
+          println("change")
+        }
+      }
     })
     bestMotif
   }

@@ -3,19 +3,14 @@ object Runner {
   def main(args: Array[String]): Unit = {
     import com.binf.Fun._
 
-    import com.funs.Rosalind._
 
-    val dna = Seq(
-      "CGCCCCTCTCGGGGGTGTTCAGTAAACGGCCA",
-      "GGGCGAGGTATGTGTAAGTGCCAAGGTGCCAG",
-      "TAGTACCGAGACCGAAAGAAGTATACAGGCGT",
-      "TAGATCAAGTTTCAGGTGCACGTCGGTGAACC",
-      "AATCCACCAGCTCCACGTGCAATGTTGGCCTA"
-    )
+    val source = scala.io.Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/upstream250.txt")
+    val dna = source.getLines().filter(l => !l.contains(">Rv")).map(_.trim).toList
 
-    val res = randomizedMotifSearchFull(dna, 8, 5)(1000)
+    val res = randomizedMotifSearchFull(dna, 20, 8)(500)
 
-    println(res.mkString("\n"))
+    println( res.mkString("\n") )
+
     //
     //    val matrix = Array(
     //      Array(0.4, 0.3, 0.0, 0.1, 0.0, 0.9),
