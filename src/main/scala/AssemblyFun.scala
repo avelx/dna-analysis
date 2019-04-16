@@ -19,15 +19,32 @@ object AssemblyFun {
 
   def pathToGenome(kmers: Seq[String]): String = {
     val n = kmers.head.length - 1
-    def pathToGenomeAcc(s: String, mers: Seq[String]) : String = mers.find(k => k.startsWith(s.takeRight(n)) ) match {
+
+    def pathToGenomeAcc(s: String, mers: Seq[String]): String = mers.find(k => k.startsWith(s.takeRight(n))) match {
       case Some(r) => {
         val i = mers.zipWithIndex.find(x => x._1 == r).get._2
-        pathToGenomeAcc(s :+ r.last, mers.drop(i)) }
+        pathToGenomeAcc(s :+ r.last, mers.drop(i))
+      }
       case None => s
     }
 
     pathToGenomeAcc(kmers.head, kmers.tail)
   }
 
-
+  //def overlapGraph(kmers: Seq[String]) : Seq[Seq[String]] = {
+  def overlapGraph(kmers: Seq[String]): String = {
+    val res =kmers.map(k => {
+      val bf = new ListBuffer[String]()
+      bf.append(k)
+      kmers.foreach(c => {
+        if (c != k && c.startsWith(k.tail))
+          bf.append(c)
+      })
+      bf.toList
+    }).filter(l => l.length > 1)
+    res.map(l => {
+      val s = s"${l.head} -> ${l.tail.mkString(",")}"
+      s
+    }).mkString("\n")
+  }
 }

@@ -5,8 +5,8 @@ object Runner {
   def main(args: Array[String]): Unit = {
     import com.dna.assembly.AssemblyFun._
 
-    val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_198_3.txt").getLines
-    val res = pathToGenome(kmers.toSeq)
+    val kmers = Source.fromFile("//Users/pavel/Sources/dna-analysis/src/main/resources/data/kmers.txt").getLines
+    val res = overlapGraph(kmers.toSeq)
 
     println(res)
 //    val source = scala.io.Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/upstream250.txt")

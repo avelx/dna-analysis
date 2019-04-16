@@ -25,4 +25,16 @@ class AssemblyFunSpec extends FunSuite {
     assert("ACCGAAGCT" == res)
   }
 
+  test("OverlapGraph") {
+    val input = Seq("ATGCG", "GCATG", "CATGC", "AGGCA", "GGCAT", "GGCAC")
+    val expected  =
+      """GCATG -> CATGC
+        |CATGC -> ATGCG
+        |AGGCA -> GGCAT,GGCAC
+        |GGCAT -> GCATG
+      """.stripMargin
+    val res = overlapGraph(input)
+    assert(expected === res)
+  }
+
 }
