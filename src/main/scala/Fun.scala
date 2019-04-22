@@ -187,6 +187,19 @@ object Fun {
     (result :+ s.takeRight(k)).distinct
   }
 
+  def patterns_(s: String)(implicit k: Int): Seq[String] = {
+    val result = new ListBuffer[String]()
+    s.foldLeft(Seq[Char]())((r, c) => {
+      if (r.length == k) {
+        result.append(r.mkString(""))
+        r.tail :+ c
+      } else {
+        r :+ c
+      }
+    })
+    (result :+ s.takeRight(k))
+  }
+
   def motifEnumeration(DNA: Seq[String], k: Int, d: Int): Seq[String] = {
     val ps = new ListBuffer[String]()
     val allPatterns = DNA.map(patterns(_)(k)).flatten.distinct

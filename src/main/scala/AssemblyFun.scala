@@ -62,7 +62,6 @@ object AssemblyFun {
 
     val kvInv = kv.toList.map(p => (p._2, p._1)).toMap
 
-
     val size = kv.keys.toList.length
     val matrix = Array.ofDim[Int]( size, size)
     kmers
@@ -72,6 +71,8 @@ object AssemblyFun {
         val y = kv(p._2)
         matrix(x)(y) = matrix(x)(y) + 1
       })
+
+    //matrix.map(row => println(row.mkString(" ")) )
 
     val res = for{
       x <- 0 to size - 1
