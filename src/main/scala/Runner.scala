@@ -3,18 +3,30 @@ import scala.io.Source
 object Runner {
 
   def main(args: Array[String]): Unit = {
+
+//    val kmers = Seq(
+//      "GAGG",
+//      "CAGG",
+//      "GGGG",
+//      "GGGA",
+//      "CAGG",
+//      "AGGG",
+//      "GGAG"
+//    )
+    val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_200_8.txt").getLines.toList
     import com.dna.assembly.AssemblyFun._
+    val result = deBruijnGraphFromKmers(kmers)
+    println(result)
 
-    val kmers = Source.fromFile("//Users/pavel/Sources/dna-analysis/src/main/resources/data/kmers.txt").getLines
-    val res = overlapGraph(kmers.toSeq)
+    //val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_200_8.txt").getLines
 
-    println(res)
-//    val source = scala.io.Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/upstream250.txt")
-//    val dna = source.getLines().filter(l => !l.contains(">Rv")).map(_.trim).toList
-//
-//    val res = randomizedMotifSearchFull(dna, 20, 8)(500)
-//
-//    println( res.mkString("\n") )
+
+    //    val source = scala.io.Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/upstream250.txt")
+    //    val dna = source.getLines().filter(l => !l.contains(">Rv")).map(_.trim).toList
+    //
+    //    val res = randomizedMotifSearchFull(dna, 20, 8)(500)
+    //
+    //    println( res.mkString("\n") )
 
     //
     //    val matrix = Array(
