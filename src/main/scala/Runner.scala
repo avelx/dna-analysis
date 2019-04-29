@@ -1,66 +1,70 @@
-import scala.io.Source
+import com.dna.assembly.AssemblyFun._
+
+import scala.collection.mutable.ListBuffer
+
 
 object Runner {
 
+
+  def printGraph(g: Graph) = g.foreach(row => println(row.mkString(" ")))
+
+  def cycle(g: Graph, gf: Graph) = {
+
+    val paths = new ListBuffer[Array[Int]]()
+
+    def cycleAcc(from: Int, path: List[Int], gx: Graph, baseFrom: Int): Array[Array[Int]] = g(from) match {
+      case a: Array[Int] => {
+        val ax = a.map(y => {
+          if (gx(from)(y) > 0) {
+            gx(from)(y) = gx(from)(y) - 1
+            cycleAcc(y, path :+ y, gx, baseFrom)
+          } else
+            Array(path.toArray[Int])
+        })
+        ax.flatten
+      }
+    }
+
+    val f = 0
+    val res = cycleAcc(f, List(0), gf, f)
+    res.foreach(row => println(row.mkString(" ")))
+    //println( res.mkString(" ") )
+  }
+
+
   def main(args: Array[String]): Unit = {
 
-    import com.binf.Fun._
-    import com.dna.assembly.AssemblyFun._
+    val g: Graph =
+      """0 -> 3
+        |     1 -> 0
+        |     2 -> 1,6
+        |     3 -> 2
+        |     4 -> 2
+        |     5 -> 4
+        |     6 -> 5,8
+        |     7 -> 9
+        |     8 -> 7
+        |     9 -> 6""".stripMargin
+        .replaceAll("-", "")
+        .replaceAll(" ", "")
+        .split("\n")
+        //.map(_.split("//"))
+        //.map(_.head)
+        .map(_.trim())
+        .map(_.split(Array(',', '>', ' ')))
+        .map(_.map(_.trim))
+        .map(_.map(_.toInt))
 
-    val dna = "TGGCCACGATATAAGGGCTTACTGACGGCCTCGCCGCCTTGGAGCCAAGTCACCTGTACAGTGAAACACCGATTTGGGCACTCTCAAGGTTCATTTTCAGAAGAGACCTCATCTACACGCTGAAAGCGGGCAAGTGATACGACCACCGGCAACAGTCCAGCGTAGCCAGAGAGCGGATACACTTTCGCGCACAGATGACCAAAAACGGAGAGTCGTCGGTAGTCGCAGACTGGACGGGGCGTTTCTCTATGGTGCAGCAGTTACGCAAATAAAACAAATACCTGCCCATTGAAGTTTGACCGGTGGTAAATGAGCTCGCACCGATGACTGAGTGAGGTCCCGGGATAAAGGAAGGCTAGCCCATTCTCTTGACGCCACGGTTCCTACATGGATTGCATCACGGAATGCACCGCTAAGTGGAGCTCGCTAGTGCCTTACTCAGCCCGACTCATTGCCCCGTCCCGGTTATCGCCGAGCAAGAGAGAATGGGACGACTACGTATGCCTGCGCACACAGTAGATGATTTTAAGCATCCCCGCAAGAACCTAACGATAATTTGCATGGTGAGTCGTCGTACCTGGGATACGTCTTGTTTGGTCAGAATAGTAGCATCATCGGCCGAATCTCTGTGCATAATGCCACTCAAACGTTGCGACACCCTACCCATACTCCGCGAGATAAAGCGAGTGACCACGTAGGGTCCTCGTCTCACTCAGCTTCGTATGGTCTTTCAAGTTCCACTTAGGCGAGGTACATCGATCCAGTGAGGCAGATGCACTGTATGAACCCGCACAGCGCATATGACTCAGGCGCGTGAGAAAATAATCGGGCGGAGTTGGACACTGGTACCGTATCAGTTTTGGATAGCCGCTTACACTACTCTAGCACCGTACATCATCTCAGGGAGACCAATTACTAACGTGCTTCTGCGAGTTGTAACTAGGATGAAATGGATTATGAAAACACATATAGATCGGTCGTGGTCGATGGATTATTAGCAGAAGGGGACTAACTAATGAGCATTGATTCGATGATTGCTGCGGTAGGGAGATCAGATCTCCCAGTGACTTTAGCTTTATCAAACAGTCAATGGAATCAACATAGAAGAAGAATAATGCCATATTCATTTCATCGCTCATTCCGATCGTCACATGTGGCTTTGGAGACGCAGGCCTCTCTCCTCAAACCTCAGCGAAACGACACAGCGTTAATACTCCACAGAGGTTGTCTTCCACTGAACAGACTAGCACCAAAATGCTTTCAACTACTGGGGACCGATGCGGAACCTATAAGGCAACCCGCACCCCGGAGTAAGATCGACGGGCACGCGGATTCTCCGACTCCGGAGTTGGCGAGGTGTACCGAGCCGGGCAAGGAAGCGGTAACAGCCCCTCCTAAAGACGTATACCACACAGGCGCTGCCTAGCTTGTTCGAGAGCGTATTCTCAATCAGTCCTAGCAGACTTACTAGCATGTCTGTAAGTCTCTTGACCAGATCCTCAGTGTCGACTTGAACGGCGGGCAAAGTGGCTTTCCTGATAGGGAGTTAGCATTAGGATGGGTGAACAACGCCCATGTCTTCTGCCTTGGTTGTGAGCTGTGTAATGGGACTAATGTCATGTTGGATGGACTAAGCAAAGCTGGCACGCGGCTAGAGGGTGCGTATAGAGCGTGGGGAACAAGGAATTGTACCTCCCTAGAATACTCCAGCCTGCCTTGGGCAAGTCGCTCCCTCATCACGACGCTTTTCCGCCAAGACCTCAAAGACTCTCGGTTCTCGTAATCGCGGTAGGGCAGATGCACGATTCCTCTTTCTGCTGACCCCATCTAGGGGAGAGGTGCACCGGTATCAGCAAGATTTGTGTTCGGTAGAACCAGAGAACGCACTACCTGCCCGTGCGGCCTAGACCTCTCTTTTGATAAGAAGGAACATATCTGTTGCGAGCTATCGGTCATACCGGACAGCGACTCTCCAAACTGTTCCTGAAGAACATTAATAA"
+    val size = 10
+    // from / to
+    val matrix: Graph = Array.ofDim[Int](size, size)
+    g.map(row => {
+      val x = row.head
+      row.tail.map(y => matrix(x)(y) = matrix(x)(y) + 1)
+    })
 
-    //val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_200_8.txt").getLines.toList
-
-    val kmers = patterns_(dna)(12)
-
-    val res = deBruijnGraphFromKmers( kmers )
-    println(res)
-
-//    val kmers = Seq(
-//      "GAGG",
-//      "CAGG",
-//      "GGGG",
-//      "GGGA",
-//      "CAGG",
-//      "AGGG",
-//      "GGAG"
-//    )
-//    val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_200_8.txt").getLines.toList
-//    import com.dna.assembly.AssemblyFun._
-//    val result = deBruijnGraphFromKmers(kmers)
-//    println(result)
-
-    //val kmers = Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/data/dataset_200_8.txt").getLines
-
-
-    //    val source = scala.io.Source.fromFile("/Users/pavel/Sources/bif/dna-analysis/src/main/resources/upstream250.txt")
-    //    val dna = source.getLines().filter(l => !l.contains(">Rv")).map(_.trim).toList
-    //
-    //    val res = randomizedMotifSearchFull(dna, 20, 8)(500)
-    //
-    //    println( res.mkString("\n") )
-
-    //
-    //    val matrix = Array(
-    //      Array(0.4, 0.3, 0.0, 0.1, 0.0, 0.9),
-    //      Array(0.2, 0.3, 0.0, 0.4, 0.0, 0.1),
-    //      Array(0.1, 0.3, 1.0, 0.1, 0.5, 0.0),
-    //      Array(0.3, 0.1, 0.0, 0.4, 0.5, 0.0)
-    //    )
-    //    println( pr(matrix, "TCGGTA") )
-    //    val dna = Seq(
-    //      "CTCGATGAGTAGGAAAGTAGTTTCACTGGGCGAACCACCCCGGCGCTAATCCTAGTGCCC",
-    //        "GCAATCCTACCCGAGGCCACATATCAGTAGGAACTAGAACCACCACGGGTGGCTAGTTTC",
-    //        "GGTGTTGAACCACGGGGTTAGTTTCATCTATTGTAGGAATCGGCTTCAAATCCTACACAG"
-    //    )
-    //    println( medianString(dna, 7) )
-    //    val p : Array[Array[Double]] = Array(
-    //      Array(0.5, 0, 0, 0.5),
-    //      Array(0.25, 0.25, 0.25, 0.25),
-    //      Array(0, 0, 0, 1),
-    //      Array(0.25, 0, 0.5, 0.25))
-    //    val res = entroty(p)
-    //    println( res.mkString(" "))
+    cycle(g, matrix)
+    //printGraph(matrix)
   }
 
 }

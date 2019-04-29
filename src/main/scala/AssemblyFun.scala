@@ -5,6 +5,8 @@ import scala.collection.mutable.ListBuffer
 
 object AssemblyFun {
 
+  type Graph = Array[Array[Int]]
+
   def composition(dna: String, k: Int): Seq[String] = {
     val result = new ListBuffer[String]()
     dna.foldLeft(Seq[Char]())((r, c) => {
@@ -124,4 +126,7 @@ object AssemblyFun {
 
     t.mkString("\n")
   }
+
+  def eulerianCycle(g: Graph): String = ???
+
 }
