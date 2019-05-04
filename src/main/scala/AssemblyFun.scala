@@ -127,6 +127,46 @@ object AssemblyFun {
     t.mkString("\n")
   }
 
-  def eulerianCycle(g: Graph): String = ???
+  def eulerianCycle(g: Graph, size: Int): String = {
+
+    val gf: Graph = Array.ofDim[Int](size, size)
+    g.map(row => {
+      val x = row.head
+      row.tail.map(y => gf(x)(y) = gf(x)(y) + 1)
+    })
+
+    def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int]): Array[Array[Int]] = gxk(fk)(tk) match {
+      case v: Int if ((v) > 0) => {
+        gxk(fk)(tk) = 0
+        gxk(tk).zipWithIndex.filter(p => p._1 > 0).map(_._2) match {
+          case arr: Array[Int] if (arr.length > 0) =>
+            arr.map(y => dive(tk, y , gxk.clone(), tk +: acc)).flatten
+          case _ =>
+            Array( (tk+: acc).toArray[Int] )
+        }
+      }
+      case _ => Array((tk +: acc).toArray[Int])
+    }
+
+    def cycleAcc(from: Int, gx: Graph): Array[Array[Int]] = {
+      val r = for {
+        to <- gx(from).zipWithIndex.filter(_._1 > 0).map(_._2)
+        ff = dive(from, to, gx.clone(), List(from) )
+      } yield ff
+      r.flatten
+    }
+
+    val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
+
+    var pathsResult = Array[Array[Int]]()
+    var from: Int = 0
+    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && from < gf.length ){
+      val paths = cycleAcc(from,  gf.map(_.clone()) )
+      pathsResult = paths.filter(p => p.head == from)
+      from += 1
+    }
+
+    pathsResult.flatten.reverse.mkString("->")
+  }
 
 }
