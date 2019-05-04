@@ -1,5 +1,7 @@
 import com.dna.assembly.AssemblyFun._
 
+import scala.util.Random
+
 object Runner {
 
   def printGraph(g: Graph) = g.foreach(row => println(row.mkString(" ")))
@@ -27,15 +29,27 @@ object Runner {
         r.flatten
     }
 
-    val res = for {
-      from <- 0 to 9
-      paths = cycleAcc(from,  gf.clone() )
-      allPaths = paths.filter(p => p.head == from)
-    } yield allPaths
+//    val res = for {
+//      from <- 0 to 9
+//      paths = cycleAcc(from,  gf.clone() )
+//      allPaths = paths.filter(p => p.head == from)
+//    } yield allPaths
 
+    val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
+
+    var pathsResult = Array[Array[Int]]()
+    var from: Int = 0
+    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && from < gf.length ){
+      val paths = cycleAcc(from,  gf.map(_.clone()) )
+      pathsResult = paths.filter(p => p.head == from)
+      from += 1
+    }
+
+
+    println( pathsResult.flatten.reverse.mkString("->") )
 
     //val res = cycleAcc(f,  gf )
-    res.flatten.foreach(row => println(row.mkString(" ")))
+    //pathsResult.foreach(row => println( row.mkString("->") ) )
     // Find Graph
     //val t = res.find(row => row.length > 1 && row.last == f).getOrElse( Array() )
     //println( t.mkString(" ") )
@@ -74,8 +88,11 @@ object Runner {
       row.tail.map(y => matrix(x)(y) = matrix(x)(y) + 1)
     })
 
+
     cycle(g, matrix)
-    //printGraph(matrix)
+    //printGraph(g)
+    //println(edges)
+
   }
 
 }
