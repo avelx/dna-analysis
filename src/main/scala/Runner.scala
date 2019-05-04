@@ -1,9 +1,18 @@
 import com.dna.assembly.AssemblyFun._
 
 import scala.io.Source
-import scala.util.Random
 
-object Runner {
+trait Profiler {
+  def time[R](block: => R): R = {
+    val start = System.currentTimeMillis()
+    val result = block
+    val end = System.currentTimeMillis()
+    println(s"Elapsed time: ${end - start} ms")
+    result
+  }
+}
+
+object Runner extends Profiler {
 
   def printGraph(g: Graph) = g.foreach(row => println(row.mkString(" ")))
 
@@ -60,26 +69,13 @@ object Runner {
 
   def main(args: Array[String]): Unit = {
 
-    val g: Graph =
-      """0 -> 3
-        |     1 -> 0
-        |     2 -> 1,6
-        |     3 -> 2
-        |     4 -> 2
-        |     5 -> 4
-        |     6 -> 5,8
-        |     7 -> 9
-        |     8 -> 7
-        |     9 -> 6""".stripMargin
-        .replaceAll("-", "")
-        .replaceAll(" ", "")
-        .split("\n")
-        //.map(_.split("//"))
-        //.map(_.head)
-        .map(_.trim())
-        .map(_.split(Array(',', '>', ' ')))
-        .map(_.map(_.trim))
-        .map(_.map(_.toInt))
+    val graphAsString =
+      """|0 -> 1,2,3,4
+         |1 -> 0,2,3,4
+         |2 -> 0,1,3,4
+         |3 -> 0,1,2,4
+         |4 -> 0,1,2,3
+      """.stripMargin
 
     def toGraph(s: String): (Graph, Int) = {
       val g: Graph = s
@@ -100,10 +96,12 @@ object Runner {
     //printGraph(g)
     //println(edges)
 
-    val graphAsString = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_2.txt").getLines().toList.mkString("\n")
-    val (gh, s) = toGraph(graphAsString)
-    val res = eulerianCycle(gh, s)
+    val graphAsString_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_2.txt").getLines().toList.mkString("\n")
+    val (gh, s) = toGraph(graphAsString_)
 
+    val res = time {
+      eulerianCycle(gh, s)
+    }
     println(res)
 
   }

@@ -2,6 +2,7 @@ package com.dna.assembly
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 object AssemblyFun {
 
@@ -137,10 +138,10 @@ object AssemblyFun {
 
     def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int]): Array[Array[Int]] = gxk(fk)(tk) match {
       case v: Int if ((v) > 0) => {
-        gxk(fk)(tk) = 0
+        gxk(fk)(tk) = gxk(fk)(tk) - 1
         gxk(tk).zipWithIndex.filter(p => p._1 > 0).map(_._2) match {
           case arr: Array[Int] if (arr.length > 0) =>
-            arr.map(y => dive(tk, y , gxk.clone(), tk +: acc)).flatten
+            arr.map(y => dive(tk, y , gxk, tk +: acc)).flatten
           case _ =>
             Array( (tk+: acc).toArray[Int] )
         }
@@ -151,7 +152,7 @@ object AssemblyFun {
     def cycleAcc(from: Int, gx: Graph): Array[Array[Int]] = {
       val r = for {
         to <- gx(from).zipWithIndex.filter(_._1 > 0).map(_._2)
-        ff = dive(from, to, gx.clone(), List(from) )
+        ff = dive(from, to, gx, List(from) )
       } yield ff
       r.flatten
     }
@@ -159,14 +160,17 @@ object AssemblyFun {
     val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
 
     var pathsResult = Array[Array[Int]]()
-    var from: Int = 0
-    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && from < gf.length ){
-      val paths = cycleAcc(from,  gf.map(_.clone()) )
-      pathsResult = paths.filter(p => p.head == from)
-      from += 1
+    val froms = new ListBuffer[Int]()
+    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && froms.length < size ){
+      val from = Random.nextInt(size)
+      if (!froms.contains(from)) {
+        val paths = cycleAcc(from, gf.map(_.clone()))
+        pathsResult = paths.filter(p => p.head == from)
+        froms.append(from)
+      }
     }
 
-    pathsResult.flatten.reverse.mkString("->")
+    pathsResult.headOption.map(_.reverse.mkString("->") ).getOrElse("")
   }
 
 }
