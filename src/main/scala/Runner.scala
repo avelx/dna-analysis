@@ -1,6 +1,9 @@
 import com.dna.assembly.AssemblyFun._
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.io.Source
+import scala.util.Random
 
 trait Profiler {
   def time[R](block: => R): R = {
@@ -16,47 +19,62 @@ object Runner extends Profiler {
 
   def printGraph(g: Graph) = g.foreach(row => println(row.mkString(" ")))
 
-  def cycle(g: Graph, gf: Graph) = {
+  def cycle(g: Graph, size: Int) = {
 
-    def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int]): Array[Array[Int]] = gxk(fk)(tk) match {
+    val gf: Graph = Array.ofDim[Int](size, size)
+    g.map(row => {
+      val x = row.head
+      row.tail.map(y => gf(x)(y) = gf(x)(y) + 1)
+    })
+
+
+    def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int], baseFrom: Int): Array[Array[Int]] = gxk(fk)(tk) match {
       case v: Int if ((v) > 0) => {
         gxk(fk)(tk) = 0
         gxk(tk).zipWithIndex.filter(p => p._1 > 0).map(_._2) match {
           case arr: Array[Int] if (arr.length > 0) =>
-            arr.map(y => dive(tk, y, gxk.clone(), tk +: acc)).flatten
+          {
+            for {
+              y <- arr
+              r = dive(tk, y, gxk, tk +: acc, baseFrom)
+            } yield r
+          }.flatten
           case _ =>
-            Array((tk +: acc).toArray[Int])
+            val out = (tk +: acc).toArray[Int]
+            if (out.head == baseFrom) Array(out) else Array()
         }
       }
-      case _ => Array((tk +: acc).toArray[Int])
+      case _ =>
+        val out = (tk +: acc).toArray[Int]
+        if (out.head == baseFrom) Array(out) else Array()
     }
 
     def cycleAcc(from: Int, gx: Graph): Array[Array[Int]] = {
       val r = for {
         to <- gx(from).zipWithIndex.filter(_._1 > 0).map(_._2)
-        ff = dive(from, to, gx.clone(), List(from))
+        ff = dive(from, to, gx, List(from), from)
       } yield ff
       r.flatten
     }
 
-    //    val res = for {
-    //      from <- 0 to 9
-    //      paths = cycleAcc(from,  gf.clone() )
-    //      allPaths = paths.filter(p => p.head == from)
-    //    } yield allPaths
-
-    val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
+    val numberOfEdges = g.map(_.tail.map(_ => 1)).flatten.sum
 
     var pathsResult = Array[Array[Int]]()
-    var from: Int = 0
-    while (!pathsResult.exists(res => res.length == edgesNumber - 1) && from < gf.length) {
+    var from = -1
+    var froms = mutable.Set[Int]()
+    while (!pathsResult.exists(res => res.length == numberOfEdges + 1) && froms.size != size) {
+      do{
+        from = Random.nextInt(size)
+      } while (froms.contains(from))
+      froms = froms + from
+      println(s"From: $from - Left: ${size - froms.size}")
       val paths = cycleAcc(from, gf.map(_.clone()))
       pathsResult = paths.filter(p => p.head == from)
-      from += 1
     }
 
-
-    println(pathsResult.flatten.reverse.mkString("->"))
+    if (pathsResult.exists(res => res.length == numberOfEdges + 1)) {
+      println(pathsResult.head.reverse.mkString("->"))
+    }
 
     //val res = cycleAcc(f,  gf )
     //pathsResult.foreach(row => println( row.mkString("->") ) )
@@ -70,11 +88,16 @@ object Runner extends Profiler {
   def main(args: Array[String]): Unit = {
 
     val graphAsString =
-      """|0 -> 1,2,3,4
-         |1 -> 0,2,3,4
-         |2 -> 0,1,3,4
-         |3 -> 0,1,2,4
-         |4 -> 0,1,2,3
+      """|0 -> 3
+         |1 -> 0
+         |2 -> 1,6
+         |3 -> 2
+         |4 -> 2
+         |5 -> 4
+         |6 -> 5,8
+         |7 -> 9
+         |8 -> 7
+         |9 -> 6
       """.stripMargin
 
     def toGraph(s: String): (Graph, Int) = {
@@ -91,18 +114,74 @@ object Runner extends Profiler {
       (g, g.flatten.max + 1)
     }
 
+    case class Node(i: Int){
+      def hasNeighbours: Boolean = neighbours.size > 0
+      val neighbours = ListBuffer[Int]()
+      def addNeigbour(i: Int) = neighbours.append(i)
+      def remove(i: Int) = {
+        val index = neighbours.indexOf(i)
+        if (index == -1)
+          throw new Error("Index not exists")
+        else
+          neighbours.remove(index)
+      }
+    }
 
-    //cycle(g, matrix)
+
+    val graphAsString_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_2.txt").getLines().toList.mkString("\n")
+
+    val (graph, s) = toGraph(graphAsString)
+
+    val nodes = new ListBuffer[Node]()
+    graph.map(n => {
+      val node = new Node(n.head)
+      n.tail.map(nb => node.addNeigbour(nb))
+      nodes.append(node)
+    })
+
+    val numberOfEdges = graph.map(_.tail.map(_ => 1)).flatten.sum
+    val circuit : Array[Int] = Array.fill(numberOfEdges + 1)(0)
+    var circuitPos : Int = 0
+
+    def find_cicuit(node: Node): Boolean = {
+      if (!node.hasNeighbours) {
+        circuit(circuitPos) = node.i
+        circuitPos += 1
+        true
+      } else {
+        while(node.hasNeighbours){
+          val index = Random.nextInt(node.neighbours.size)
+          val nodeId = node.neighbours(index)
+          node.remove(nodeId)
+          val new_node = nodes.find(n => n.i == nodeId).getOrElse( Node(-1))
+          find_cicuit(new_node)
+        }
+        circuit(circuitPos) = node.i
+        circuitPos += 1
+        false
+      }
+    }
+
+    val res = find_cicuit( nodes.head )
+
+    println( circuit.mkString(" ") )
+
+    println(res)
+
     //printGraph(g)
     //println(edges)
 
-    val graphAsString_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_2.txt").getLines().toList.mkString("\n")
-    val (gh, s) = toGraph(graphAsString_)
 
-    val res = time {
-      eulerianCycle(gh, s)
-    }
-    println(res)
+
+
+
+    //val res = cycle(gh, s)
+
+    //println(res)
+
+    //val res = time {
+    //  eulerianCycle(gh, s)
+    //}
 
   }
 
