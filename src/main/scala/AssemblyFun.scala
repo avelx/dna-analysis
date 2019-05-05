@@ -227,12 +227,15 @@ object AssemblyFun {
       .zipWithIndex
       .toMap[String, Int]
 
+    val kmersIndexesRev = kmersIndexes.toList.map(p => (p._2, p._1) ).toMap[Int, String]
+
     val g = deBruijnGraphFromKmers(kmers)
     val graph = g.map(y => y.map(x =>kmersIndexes(x) ) )
     val size = graph.flatten.max + 1
 
     val path = eulerianPath(graph, size)
-    val text = pathToGenome( path.map(_.toString) )
+    val path_ = path.map(i => kmersIndexesRev(i) )
+    val text = pathToGenome( path_ )
     text
   }
 
