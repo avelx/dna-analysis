@@ -214,7 +214,7 @@ object AssemblyFun {
       }
     }
 
-    val node = nodes.find(n => n.i == unbalancedPairs.head._2).getOrElse( Node(-1) )
+    val node = nodes.find(n => n.i == unbalancedPairs.headOption.map(_._2) ).getOrElse( nodes(0) )
     val res = findCircuit(node)
 
     circuit.reverse.init.toArray

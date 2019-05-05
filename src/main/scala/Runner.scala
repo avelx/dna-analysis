@@ -1,5 +1,7 @@
 import com.dna.assembly.AssemblyFun._
 
+import scala.io.Source
+
 object Runner extends Profiler {
 
   def printGraph(g: Graph) = g.foreach(row => println(row.mkString(" ")))
@@ -14,8 +16,13 @@ object Runner extends Profiler {
       "GCTT",
       "TTAC"
     )
-    val text = stringReconstruction(kmers)
+
+    val kmers_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_7.txt").getLines()
+      .toList.tail
+
+    val text = stringReconstruction(kmers_)
     println(text)
+
   }
 
 }
