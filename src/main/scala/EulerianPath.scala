@@ -35,6 +35,9 @@ object EulerianPath extends Profiler {
       (g, g.flatten.max + 1)
     }
 
+    val graphAsString_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_6.txt").getLines().toList.mkString("\n")
+
+
     case class Node(i: Int) {
       def hasNeighbours: Boolean = neighbours.size > 0
 
@@ -50,8 +53,6 @@ object EulerianPath extends Profiler {
           neighbours.remove(index)
       }
     }
-
-    val graphAsString_ = Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_203_6.txt").getLines().toList.mkString("\n")
 
     val (graph, size) = toGraph(graphAsString_)
 

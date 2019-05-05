@@ -6,6 +6,16 @@ object Runner extends Profiler {
 
   def main(args: Array[String]): Unit = {
 
+    val kmers = Seq(
+      "CTTA",
+      "ACCA",
+      "TACC",
+      "GGCT",
+      "GCTT",
+      "TTAC"
+    )
+    val text = stringReconstruction(kmers)
+    println(text)
   }
 
 }

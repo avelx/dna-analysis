@@ -51,9 +51,10 @@ object AssemblyFun {
     }).mkString("\n")
   }
 
-  def deBruijnGraphFromKmers(kmers: Seq[String]): String = {
+  //def deBruijnGraphFromKmers(kmers: Seq[String]): String = {
+  def deBruijnGraphFromKmers(kmers: Seq[String]): Array[Array[String]] = {
 
-    val sp = kmers.map(s => Seq(s.init, s.tail) ).flatten
+  val sp = kmers.map(s => Seq(s.init, s.tail) ).flatten
     var kv = mutable.Map[String, Int]()
     var i = 0
     sp.map(x => {
@@ -94,7 +95,9 @@ object AssemblyFun {
         r = r + (p._1 -> p._2)
     })
 
-    r.toList.sortBy(_._1).map(row => s"${row._1} -> ${row._2.mkString(",")}" ).mkString("\n")
+    //r.toList.sortBy(_._1).map(row => s"${row._1} -> ${row._2.mkString(",")}" ).mkString("\n")
+    r.toArray.sortBy(_._1).map(row => row._1 +: row._2.toArray[String] )
+    //.map(row => s"${row._1} -> ${row._2.mkString(",")}" ).mkString("\n")
   }
 
   def deBruijinGrapFromString(dna: String, k: Int) : String = {
@@ -128,49 +131,159 @@ object AssemblyFun {
     t.mkString("\n")
   }
 
-  def eulerianCycle(g: Graph, size: Int): String = {
+  def eulerianCycle(g: Graph, size: Int): String = ???
 
-    val gf: Graph = Array.ofDim[Int](size, size)
-    g.map(row => {
-      val x = row.head
-      row.tail.map(y => gf(x)(y) = gf(x)(y) + 1)
+
+  def eulerianPath(graph:  Graph, size: Int) : Array[Int] = {
+
+    case class Node(i: Int) {
+      def hasNeighbours: Boolean = neighbours.size > 0
+
+      val neighbours = ListBuffer[Int]()
+
+      def addNeigbour(i: Int) = neighbours.append(i)
+
+      def remove(i: Int) = {
+        val index = neighbours.indexOf(i)
+        if (index == -1)
+          throw new Error("Index not exists")
+        else
+          neighbours.remove(index)
+      }
+    }
+
+    //val (graph, size) = toGraph(graphAsString_)
+
+    val nodes = new ListBuffer[Node]()
+    graph.map(n => {
+      val node = new Node(n.head)
+      n.tail.map(nb => node.addNeigbour(nb))
+      nodes.append(node)
     })
 
-    def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int]): Array[Array[Int]] = gxk(fk)(tk) match {
-      case v: Int if ((v) > 0) => {
-        gxk(fk)(tk) = gxk(fk)(tk) - 1
-        gxk(tk).zipWithIndex.filter(p => p._1 > 0).map(_._2) match {
-          case arr: Array[Int] if (arr.length > 0) =>
-            arr.map(y => dive(tk, y , gxk, tk +: acc)).flatten
-          case _ =>
-            Array( (tk+: acc).toArray[Int] )
+    ///////////////////////////////////////////////////////
+    // PrepProcess
+    val inNodes = new Array[Int](size)
+    val outNodes = new Array[Int](size)
+    nodes.map(n => {
+      outNodes(n.i) = outNodes(n.i) + n.neighbours.length
+      n.neighbours.map(nb => inNodes(nb) = inNodes(nb) + 1)
+    })
+
+    val unbalancedNodes = (0 to size - 1).map(i => if (inNodes(i) != outNodes(i)) i else 0).filter(_ > 0)
+    val unbalancedFrom = unbalancedNodes.map(i => if (inNodes(i) > outNodes(i)) i else 0 ).filter(_ > 0)
+    val unbalancedTo = unbalancedNodes.map(i => if (inNodes(i) < outNodes(i)) i else 0 ).filter(_ > 0)
+
+    val unbalancedPairs = unbalancedFrom zip unbalancedTo
+
+    unbalancedPairs.foreach(p => {
+      nodes.find(_.i == p._1) match {
+        case None =>
+          val node = Node(p._1)
+          node.addNeigbour(p._2)
+          nodes.append(node)
+        case Some(node) =>
+          node.addNeigbour(p._2)
+      }
+    })
+
+    ///////////////////////////////////////////////////////
+
+    val numberOfEdges = graph.map(_.tail.map(_ => 1)).flatten.sum
+    val circuit: Array[Int] = Array.fill(numberOfEdges + 2 )(0)
+    var circuitPos: Int = 0
+
+    def findCircuit(node: Node): Boolean = {
+      if (!node.hasNeighbours) {
+        circuit(circuitPos) = node.i
+        circuitPos += 1
+        true
+      } else {
+        while (node.hasNeighbours) {
+          val index = Random.nextInt(node.neighbours.size)
+          val nodeId = node.neighbours(index)
+          node.remove(nodeId)
+          val new_node = nodes.find(n => n.i == nodeId).getOrElse(Node(-1))
+          //          if (new_node.i == -1)
+          //            println(new_node)
+          findCircuit(new_node)
         }
-      }
-      case _ => Array((tk +: acc).toArray[Int])
-    }
-
-    def cycleAcc(from: Int, gx: Graph): Array[Array[Int]] = {
-      val r = for {
-        to <- gx(from).zipWithIndex.filter(_._1 > 0).map(_._2)
-        ff = dive(from, to, gx, List(from) )
-      } yield ff
-      r.flatten
-    }
-
-    val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
-
-    var pathsResult = Array[Array[Int]]()
-    val froms = new ListBuffer[Int]()
-    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && froms.length < size ){
-      val from = Random.nextInt(size)
-      if (!froms.contains(from)) {
-        val paths = cycleAcc(from, gf.map(_.clone()))
-        pathsResult = paths.filter(p => p.head == from)
-        froms.append(from)
+        circuit(circuitPos) = node.i
+        circuitPos += 1
+        false
       }
     }
 
-    pathsResult.headOption.map(_.reverse.mkString("->") ).getOrElse("")
+    val node = nodes.find(n => n.i == unbalancedPairs.head._2).getOrElse( Node(-1) )
+    val res = findCircuit(node)
+
+    circuit.reverse.init.toArray
   }
+
+  def stringReconstruction(kmers : Seq[String]) : String = {
+    val kmersIndexes = kmers
+      .map(x => Seq(x.init, x.tail) )
+      .flatten
+      .zipWithIndex
+      .toMap[String, Int]
+
+    val g = deBruijnGraphFromKmers(kmers)
+    val graph = g.map(y => y.map(x =>kmersIndexes(x) ) )
+    val size = graph.flatten.max + 1
+
+    val path = eulerianPath(graph, size)
+    val text = pathToGenome( path.map(_.toString) )
+    text
+  }
+
+  //StringReconstruction(Patterns)
+  //dB ← DeBruijn(Patterns)
+  //path ← EulerianPath(dB)
+  //Text﻿ ← PathToGenome(path)
+  //return Text
+
+//
+//    val gf: Graph = Array.ofDim[Int](size, size)
+//    g.map(row => {
+//      val x = row.head
+//      row.tail.map(y => gf(x)(y) = gf(x)(y) + 1)
+//    })
+//
+//    def dive(fk: Int, tk: Int, gxk: Graph, acc: List[Int]): Array[Array[Int]] = gxk(fk)(tk) match {
+//      case v: Int if ((v) > 0) => {
+//        gxk(fk)(tk) = gxk(fk)(tk) - 1
+//        gxk(tk).zipWithIndex.filter(p => p._1 > 0).map(_._2) match {
+//          case arr: Array[Int] if (arr.length > 0) =>
+//            arr.map(y => dive(tk, y , gxk, tk +: acc)).flatten
+//          case _ =>
+//            Array( (tk+: acc).toArray[Int] )
+//        }
+//      }
+//      case _ => Array((tk +: acc).toArray[Int])
+//    }
+//
+//    def cycleAcc(from: Int, gx: Graph): Array[Array[Int]] = {
+//      val r = for {
+//        to <- gx(from).zipWithIndex.filter(_._1 > 0).map(_._2)
+//        ff = dive(from, to, gx, List(from) )
+//      } yield ff
+//      r.flatten
+//    }
+//
+//    val edgesNumber = g.map(_.tail.map(_ => 1)).flatten.sum
+//
+//    var pathsResult = Array[Array[Int]]()
+//    val froms = new ListBuffer[Int]()
+//    while ( !pathsResult.exists(res => res.length == edgesNumber - 1) && froms.length < size ){
+//      val from = Random.nextInt(size)
+//      if (!froms.contains(from)) {
+//        val paths = cycleAcc(from, gf.map(_.clone()))
+//        pathsResult = paths.filter(p => p.head == from)
+//        froms.append(from)
+//      }
+//    }
+//
+//    pathsResult.headOption.map(_.reverse.mkString("->") ).getOrElse("")
+//  }
 
 }
