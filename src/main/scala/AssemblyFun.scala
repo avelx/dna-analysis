@@ -235,6 +235,7 @@ object AssemblyFun {
 
     val path = eulerianPath(graph, size)
     val path_ = path.map(i => kmersIndexesRev(i) )
+
     val text = pathToGenome( path_ )
     text
   }
