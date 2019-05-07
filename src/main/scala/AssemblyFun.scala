@@ -133,7 +133,6 @@ object AssemblyFun {
 
   def eulerianCycle(g: Graph, size: Int): String = ???
 
-
   def eulerianPath(graph:  Graph, size: Int) : Array[Int] = {
 
     case class Node(i: Int) {
@@ -152,7 +151,6 @@ object AssemblyFun {
       }
     }
 
-    //val (graph, size) = toGraph(graphAsString_)
 
     val nodes = new ListBuffer[Node]()
     graph.map(n => {
@@ -204,8 +202,6 @@ object AssemblyFun {
           val nodeId = node.neighbours(index)
           node.remove(nodeId)
           val new_node = nodes.find(n => n.i == nodeId).getOrElse(Node(-1))
-          //          if (new_node.i == -1)
-          //            println(new_node)
           findCircuit(new_node)
         }
         circuit(circuitPos) = node.i
