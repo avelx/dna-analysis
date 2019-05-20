@@ -1,4 +1,6 @@
-
+val x = List(5)
+val xs = List(4, 7)
+x ++ xs
 
 
 //val res = for {
