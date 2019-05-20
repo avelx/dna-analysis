@@ -8,7 +8,7 @@ object StringSpelledByGappedPatterns extends Profiler {
   val table = massTable()
   val acidMass = massTable().map(p => (p._1, p._2.toInt))
   val alphabet = table.keys.mkString("").sorted
-  val aminoAcidMass = table.values.map(_.toInt).toList
+  val aminoAcidMass = table.values.map(_.toInt).toSet.toList
 
   val massToAcid = massTable().map(p => (p._2.toInt, p._1)).withDefaultValue("")
 
@@ -46,6 +46,37 @@ object StringSpelledByGappedPatterns extends Profiler {
     } else acc)
   }
 
+  def scoreExperimentalInt(peptide: List[Int], experimental: Array[Int], spectrFun: List[Int] => List[Int]): Int = {
+    val theoretical = spectrFun(peptide)
+
+    val theoreticalBuff = theoretical.toBuffer
+
+    experimental.foldLeft(0)((acc, mass) => if (theoreticalBuff.contains(mass)) {
+      val index = theoreticalBuff.indexOf(mass)
+      theoreticalBuff.remove(index)
+      acc + 1
+    } else acc)
+  }
+
+  def linerSpectrumInt(peptide: List[Int]): List[Int] = {
+    val prefixMass = Array.fill[Int](peptide.length + 1)(0)
+
+    (1 to peptide.length).foreach(i => {
+      aminoAcidMass.foreach(s => {
+        if (peptide(i - 1) == s)
+          prefixMass(i) = prefixMass(i - 1) + s
+      })
+    })
+
+    val liner = ListBuffer[Int](0)
+    (0 to peptide.length - 1).foreach(i => {
+      (i + 1 to peptide.length).foreach(j => {
+        liner.append(prefixMass(j) - prefixMass(i))
+      })
+    })
+    liner.toList.sorted
+  }
+
   def linerSpectrum(peptide: String): List[Int] = {
     val prefixMass = Array.fill[Int](peptide.length + 1)(0)
 
@@ -68,9 +99,10 @@ object StringSpelledByGappedPatterns extends Profiler {
   def linearScore(peptide: String, spectrum: Array[Int]): Int =
     scoreExperimental(peptide, spectrum, linerSpectrum)
 
+  def linearScoreInt(peptide: List[Int], spectrum: Array[Int]): Int =
+    scoreExperimentalInt(peptide, spectrum, linerSpectrumInt)
+
   def trim(leaderBoard: List[String], spectrum: Array[Int], n: Int): List[String] = {
-    //val aminoAcidMass = massTable().map(p => (p._1, p._2.toInt))
-    //val alphabet = aminoAcidMass.keys.mkString("").sorted
     val linearScores = Array.fill[Int](leaderBoard.length)(0)
     (0 to leaderBoard.length - 1).foreach(j => {
       val peptide = leaderBoard(j)
@@ -85,9 +117,28 @@ object StringSpelledByGappedPatterns extends Profiler {
     (n to leaderBoard.length - 1).foreach(j => {
       if (linearScoresSorted(j) < linearScoresSorted(n - 1)) {
         val a = leaderBoardSorted.zipWithIndex.partition(p => p._2 < j)
-        //println(a._1.mkString(" "))
-        //println(a._2.mkString(" "))
-        //val addition = a._2.takeWhile(p => p._2 == a._1.last._2)
+        return a._1.map(_._1).toList
+      }
+    })
+
+    leaderBoardSorted.toList
+  }
+
+  def trimInt(leaderBoard: List[List[Int]], spectrum: Array[Int], n: Int): List[List[Int]] = {
+    val linearScores = Array.fill[Int](leaderBoard.length)(0)
+    (0 to leaderBoard.length - 1).foreach(j => {
+      val peptide = leaderBoard(j)
+      linearScores(j) = linearScoreInt(peptide, spectrum)
+    })
+
+    val leaderBoardScored = leaderBoard.zip(linearScores).sortWith(_._2 > _._2)
+    val leaderBoardSorted = leaderBoardScored.map(_._1).toBuffer
+
+    val linearScoresSorted = linearScores.sortWith(_ > _)
+
+    (n to leaderBoard.length - 1).foreach(j => {
+      if (linearScoresSorted(j) < linearScoresSorted(n - 1)) {
+        val a = leaderBoardSorted.zipWithIndex.partition(p => p._2 < j)
         return a._1.map(_._1).toList
       }
     })
@@ -100,35 +151,22 @@ object StringSpelledByGappedPatterns extends Profiler {
     def mass(p: List[Int]): Int = p.sum
 
     def expand(peptide: List[List[Int]]): List[List[Int]] =
-      peptide
-        .map(p => aminoAcidMass.map(m => m +: p))
-        .flatten
-      .filter(l => l.nonEmpty)
+      peptide.map(p => aminoAcidMass.map(m => m +: p)).flatten
 
     val leaderBoard = ListBuffer[List[Int]](List() )
-    var leaderPeptide = ListBuffer[List[Int]]()
+    val leaderPeptide = ListBuffer[List[Int]]()
 
     val parentMass = spectrum.max
     var score_leader = 0
-    while (leaderBoard.nonEmpty) {
 
+    while (leaderBoard.nonEmpty) {
       val leaderBoardCopy = expand(leaderBoard.toList)
       leaderBoard.clear()
       leaderBoard.append(leaderBoardCopy:_ *)
-
       if (leaderPeptide.nonEmpty){
-
-        val lp = leaderPeptide.map(x => (x, x.sum)).sortWith(_._2 > _._2)
-
-        val lpSorted = lp.map(_._1)
-
-
         val actualPeptide = leaderPeptide.head.map(v => massToAcid(v)).mkString("")
         score_leader = scoreExperimental(actualPeptide, spectrum, cyclicSpectrum)
       }
-
-      //println(leaderBoard.length)
-
       leaderBoardCopy.foreach(peptide => {
         if ( mass(peptide) == parentMass){
           val actualPeptide = peptide.map(v => massToAcid(v)).mkString("")
@@ -140,33 +178,16 @@ object StringSpelledByGappedPatterns extends Profiler {
             score_leader = peptideScore
           }  else if (peptideScore == score_leader)
             leaderPeptide.append(peptide)
-        } else if (mass(peptide) > parentMass){
-         val index = leaderBoard.indexOf(peptide)
-          leaderBoard.remove(index)
-        }
-
-
-//        if (mass(peptide) == parentMass) {
-//          val actualPeptide = peptide.map(v => massToAcid(v)).mkString("")
-//          if (scoreExperimental(actualPeptide, spectrum, cyclicSpectrum) <= scoreExperimental(actualPeptide, spectrum, cyclicSpectrum))
-//            leaderPeptide.append(peptide)
-//        }
-//        else if (mass(peptide) > parentMass) {
-//          //val actualPeptide = peptide.map(v => massToAcid(v)).mkString("")
-//          val index = leaderBoard.indexOf(peptide)
-//          leaderBoard.remove(index)
-//        }
-
+        } else if (mass(peptide) > parentMass)
+          leaderBoard.remove( leaderBoard.indexOf(peptide) )
       })
 
       if (leaderBoard.isEmpty)
         return     leaderPeptide.toList
 
-      val leaderBoardAsString = leaderBoard.map(row => row.map(v => massToAcid(v)).mkString("")).toSet.toList
-      val updatedLeaderBoard = trim(leaderBoardAsString, spectrum, n)
+      val updatedLeaderBoard = trimInt(leaderBoard.toList, spectrum, n)
       leaderBoard.clear()
-      val actualLeaderBoardUpdated = updatedLeaderBoard.map(row => row.map(v => acidMass(v.toString)).toList)
-      leaderBoard.append(actualLeaderBoardUpdated: _*)
+      leaderBoard.append(updatedLeaderBoard: _*)
 
     }
     leaderPeptide.toList
@@ -174,12 +195,46 @@ object StringSpelledByGappedPatterns extends Profiler {
 
   def main(args: Array[String]): Unit = {
 
-    val spectrum = "0 71 99 101 103 113 114 114 128 128 128 128 129 129 137 137 147 163 163 163 170 185 186 229 229 231 231 242 251 258 260 262 274 276 284 284 291 291 292 292 300 314 322 332 333 357 359 388 391 394 397 404 405 415 420 421 421 421 421 423 428 428 447 459 460 460 462 518 520 522 523 529 534 535 543 549 551 556 558 560 576 584 584 588 591 591 606 623 646 648 651 652 657 657 665 683 688 697 704 705 705 712 713 719 719 721 751 752 754 760 774 780 785 802 811 811 815 818 820 825 832 842 851 868 868 880 881 882 882 888 888 914 933 937 939 939 943 948 979 979 981 981 985 988 996 997 1005 1009 1010 1016 1042 1044 1051 1051 1053 1061 1066 1080 1099 1109 1110 1113 1116 1124 1125 1126 1133 1142 1143 1144 1164 1172 1179 1179 1180 1195 1208 1214 1217 1223 1227 1236 1239 1239 1253 1270 1271 1272 1273 1289 1292 1308 1309 1310 1311 1328 1342 1342 1345 1354 1358 1364 1367 1373 1386 1401 1402 1402 1409 1417 1437 1438 1439 1448 1455 1456 1457 1465 1468 1471 1472 1482 1501 1515 1520 1528 1530 1530 1537 1539 1565 1571 1572 1576 1584 1585 1593 1596 1600 1600 1602 1602 1633 1638 1642 1642 1644 1648 1667 1693 1693 1699 1699 1700 1701 1713 1713 1730 1731 1739 1749 1756 1761 1763 1766 1770 1770 1779 1796 1801 1807 1821 1827 1829 1830 1860 1862 1862 1868 1869 1876 1876 1877 1884 1893 1898 1916 1924 1924 1929 1930 1933 1935 1958 1975 1990 1990 1993 1997 1997 2005 2021 2023 2025 2030 2032 2038 2046 2047 2052 2058 2059 2061 2063 2119 2121 2121 2122 2134 2153 2153 2158 2160 2160 2160 2160 2161 2166 2176 2177 2184 2187 2190 2193 2222 2224 2248 2249 2259 2267 2281 2289 2289 2290 2290 2297 2297 2305 2307 2319 2321 2323 2330 2339 2350 2350 2352 2352 2395 2396 2411 2418 2418 2418 2434 2444 2444 2452 2452 2453 2453 2453 2453 2467 2467 2468 2478 2480 2482 2510 2581".split(" ").map(_.toInt)
-    val n = 186
+    val spectrum =
+      "0 97 99 113 114 115 128 128 147 147 163 186 227 241 242 244 244 256 260 261 262 283 291 309 330 333 340 347 385 388 389 390 390 405 435 447 485 487 503 504 518 544 552 575 577 584 599 608 631 632 650 651 653 672 690 691 717 738 745 770 779 804 818 819 827 835 837 875 892 892 917 932 932 933 934 965 982 989 1039 1060 1062 1078 1080 1081 1095 1136 1159 1175 1175 1194 1194 1208 1209 1223 1322"
+      //"0 97 99 113 114 115 128 128 147 147 163 186 227 241 242 244 244 256 260 261 262 283 291 309 330 333 340 347 385 388 389 390 390 405 435 447 485 487 503 504 518 544 552 575 577 584 599 608 631 632 650 651 653 672 690 691 717 738 745 770 779 804 818 819 827 835 837 875 892 892 917 932 932 933 934 965 982 989 1039 1060 1062 1078 1080 1081 1095 1136 1159 1175 1175 1194 1194 1208 1209 1223 1322"
+      .split(" ").map(_.toInt)
+
+//      .map(p => p.split("-").map(v => massToAcid(v.toInt) ) .mkString(""))
+//    s.foreach( println )
+//    val actualPeptide = "97-147-113-128-99-163-71-57-57-57-147-115-71".split("-").map(v => massToAcid(v.toInt)).mkString("")
+//    println( scoreExperimental(actualPeptide, spectrum, cyclicSpectrum ) )
+
+    val n = 1000
     val res = leaderBoardCyclopeptideSeqencing(spectrum, n)
+      //.map(_.sorted)
+      //.toSet
+      //.toList
 
-    println(res.headOption.getOrElse(List()).mkString("-") )
+    println( res.length )
 
+    println( res.map(r => r.mkString("-") ).mkString("\n") )
+
+
+//    val str =  res
+//       .map(p => p.map(i => massToAcid(i) ).mkString("") )
+
+//    str.foreach( println )
+//
+//    val res2 = res.map(peptide => {
+//      val actualPeptide = peptide.map(v => massToAcid(v)).mkString("")
+//      val score = scoreExperimental(actualPeptide, spectrum, cyclicSpectrum)
+//      (peptide, score)
+//    }).filter(_._2 == 83)
+//        .map(_._1)
+
+//    println( res.length )
+//    println( res.map(r => r.mkString("-") ).mkString(" ") )
+
+//    println( res.map(peptide => {
+//      val actualPeptide = peptide.map(v => massToAcid(v)).mkString("")
+//      actualPeptide
+//    }).mkString("\n"))
 
     //    val leaderBoard = //"LAST ALST TLLT TQAS"
     //      //"GFAQHVMEGIGLDVKFTNIISCFFDHEWSTCHCKHHNSINHTMSMVF LIGDDDEADNCMMMVQSIKWKTLLRYGAFFTFPFYSYAILHVFYVLW KPMWWAFIFGFCDMKNCFDAPFWMHNSVQWEQHYRCNDVKMMSQLCW MAPRDIRMYFDKYHETAALDSQWIIQQIYHLMNVRKLNRTNRFTSVG FEKYHQQQILIDAQRVRLVHTVARAGPGWVQTGGWQQTCPRYKPYAW NVNPCERSSPPNFSWFMSFWADNSDYGDVIFCCPSVLRTMEMQSKKG WDTDTFFQKAMLKKDETADQIFNLRPYSLTCHNENILGNDNQEKQAG TLGSGENDKGHTVGAGHKGHPEREFEAPIERHEHPRVMMTKVGCYWI VCGHHHEQTVIMKAFDAWKVGFLGPIVAWVIFPAVYLWGKSLCPWTN YDSPTTYLSTHCHRLTNRMVHENPVICPPQDFAKYLIQSGWEFPLVA KDPINQTGDTNVRNFNVGCFCGCYFQWERHDGTPMHFWFSQKLSLTW HMKKLFWGIMKHHILFDFVNQPAFTNKAKGPTPHKAEELIRNLGQEK FNDRQRLVCHTNQCCAYKNKVVCSGGGSEISTNAHTYHFLALGHQVG MYYSAWTEPYYPPTLQIWWWYWKYGCTACQTGPHTMVFVQPTCKCVH YYGYRQCSWCQRWTVRRMLCWIDVLHKALHWHVCLLFHQALYGFSHE WASIGAIMRSAKDMYESLEFHKTHCTYFVYMVCKEARPGWTFFIEWV"
