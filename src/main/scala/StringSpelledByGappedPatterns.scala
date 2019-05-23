@@ -1,3 +1,4 @@
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
@@ -193,27 +194,71 @@ object StringSpelledByGappedPatterns extends Profiler {
     leaderPeptide.toList
   }
 
+  def convolution(a: Array[Int]): Array[Int] = {
+    val matrix = for{
+      x <- a
+      y <- a
+      e = x - y
+      if (e > 0)
+    } yield e
+
+    matrix.toArray
+//    val res = matrix
+//      .foldLeft( mutable.Map[Int, Int]() )( (acc, c) => if ( acc.contains(c) ) acc + (c -> (acc(c) + 1) ) else acc + (c -> 1)  )
+//
+//    res.toList
+//      .sortWith(_._2 > _._2)
+//      .map(_._1)
+//      .toArray
+  }
+
   def main(args: Array[String]): Unit = {
 
+    //val experimental =
+     // "0 87 99 99 113 113 128 128 129 129 131 200 212 218 227 227 228 241 244 257 258 328 331 331 340 341 343 355 356 357 386 427 430 444 459 468 470 472 484 485 485 543 555 558 559 572 584 597 598 601 613 671 671 672 684 686 688 697 712 726 729 770 799 800 801 813 815 816 825 825 828 898 899 912 915 928 929 929 938 944 956 1025 1027 1027 1028 1028 1043 1043 1057 1057 1069 1156"
+     // .split(" ")
+     // .map(_.toInt)
+     // .sorted
+
+//    val experimental =
+//      "0 97 97 97 100 129 194 226 226 226 258 323 323 355 393 452"
+//        .split(" ").map(_.toInt)
+//
+//    //val score = scoreExperimental("MAMA", experimental, cyclicSpectrum)
+//    val score = scoreExperimental("PEEP", experimental, linerSpectrum)
+//    println(score)
+
+
+   //val experimental_ = Array(0, 137, 186, 323)
+//
+//    val spectrum = cyclicSpectrum("NQEL")
+//
+//    val spectrumModified = spectrum.sorted
+
+    //println(spectrumModified)
+
+    val experimental =
+      "0 57 118 179 236 240 301"
+      .split(" ")
+      .map(_.toInt)
+    val conv = convolution(experimental).sorted
+    println( conv.mkString(" ") )
+
+    //println(spectrum.mkString("-"))
+
+    /*
     val spectrum =
       "0 97 99 113 114 115 128 128 147 147 163 186 227 241 242 244 244 256 260 261 262 283 291 309 330 333 340 347 385 388 389 390 390 405 435 447 485 487 503 504 518 544 552 575 577 584 599 608 631 632 650 651 653 672 690 691 717 738 745 770 779 804 818 819 827 835 837 875 892 892 917 932 932 933 934 965 982 989 1039 1060 1062 1078 1080 1081 1095 1136 1159 1175 1175 1194 1194 1208 1209 1223 1322"
-      //"0 97 99 113 114 115 128 128 147 147 163 186 227 241 242 244 244 256 260 261 262 283 291 309 330 333 340 347 385 388 389 390 390 405 435 447 485 487 503 504 518 544 552 575 577 584 599 608 631 632 650 651 653 672 690 691 717 738 745 770 779 804 818 819 827 835 837 875 892 892 917 932 932 933 934 965 982 989 1039 1060 1062 1078 1080 1081 1095 1136 1159 1175 1175 1194 1194 1208 1209 1223 1322"
       .split(" ").map(_.toInt)
 
-//      .map(p => p.split("-").map(v => massToAcid(v.toInt) ) .mkString(""))
-//    s.foreach( println )
-//    val actualPeptide = "97-147-113-128-99-163-71-57-57-57-147-115-71".split("-").map(v => massToAcid(v.toInt)).mkString("")
-//    println( scoreExperimental(actualPeptide, spectrum, cyclicSpectrum ) )
-
-    val n = 1000
+    val n = 2000
     val res = leaderBoardCyclopeptideSeqencing(spectrum, n)
-      //.map(_.sorted)
-      //.toSet
-      //.toList
 
-    println( res.length )
+    val res2 = res.filter(peptide => peptide.forall(acid => acid >= 57 && acid <= 200))
+    println( res2.length )
 
-    println( res.map(r => r.mkString("-") ).mkString("\n") )
+    println( res2.map(r => r.mkString("-") ).mkString(" ") )
+    */
 
 
 //    val str =  res
