@@ -1,7 +1,5 @@
 package  com.bio3
 
-import scala.util.Try
-
 object StringTransformers {
 
   implicit def StringToArray(s: String): Array[Array[ Int] ] =
@@ -23,10 +21,39 @@ object DynamicProg {
   type Matrix = Array[Array[Int]]
 
   def main(args: Array[String]) = {
-    val money = 19322
-    val coins = Array(19,14,8,5,3,1)
-    val minCoins = dpchnage(money, coins)
-    println(minCoins)
+//    A. Change problem
+//    val money = 19322
+//    val coins = Array(19,14,8,5,3,1)
+//    val minCoins = dpchnage(money, coins)
+//    println(minCoins)
+
+//    B. Manhattan tourist problem
+//    import com.bio3.StringTransformers._
+//
+//    val n = 5
+//    val m = 6
+//    val down: Matrix =
+//      """
+//        |3 3 0 1 3 1 0
+//        |3 3 4 4 3 0 4
+//        |0 4 3 3 3 4 3
+//        |1 2 4 4 2 3 3
+//        |0 2 3 3 0 0 0
+//        |""".stripMargin
+//
+//
+//    val right: Matrix =
+//      """
+//        |2 3 1 0 2 1
+//        |2 0 0 2 2 3
+//        |2 1 1 4 4 3
+//        |0 3 4 0 0 4
+//        |2 1 4 3 4 3
+//        |2 2 3 4 4 4
+//        |""".stripMargin
+//
+//    println( manhattanTourist(n, m, down, right) )
+
   }
 
   def dpchnage(money: Int, coins: Array[Int]) : Int = {
@@ -44,23 +71,15 @@ object DynamicProg {
   }
 
   def manhattanTourist(n: Int, m: Int, down: Matrix, right: Matrix) : Int = {
-
     def max(x : Int, y : Int) : Int = if (x > y) x else y
-
     val s : Matrix = Array.fill(n + 1)( Array.fill(m + 1)(0) )
-
     (1 to n ).foreach(i => s(i)(0) = s(i)(0) + down(i - 1)(0) )
-
     (1 to m - 1).foreach(j => s(0)(j) = s(0)(j - 1) + right(0)(j - 1) )
-
     (1 to n).foreach(i => {
       (1 to m ).foreach(j =>
         s(i)(j) = max( s(i - 1)(j) + down(i - 1)(j), s(i)(j - 1) + right(i)(j - 1) )
       )
     })
-
-    s.foreach( r => println( r.mkString(" ") ) )
-
     s(n)(m)
   }
 
