@@ -6,6 +6,14 @@ class EvolutionaryTreeSpec extends FlatSpec {
 
   import course4.EvolutionaryTree._
 
+  it should "return 2" in {
+    val lines = scala.io.Source.fromFile("src/main/resources/Limb_Length.txt").getLines()
+    val matrix: Matrix = lines.toArray.tail.tail
+      .map(_.split(" "))
+      .map(_.map(_.toInt).toArray[Int])
+
+    assert( limbLength(25, 4, matrix) === 786)
+  }
 
   it should "return next result" in {
 

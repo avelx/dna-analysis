@@ -60,4 +60,17 @@ object EvolutionaryTree {
         output
     }
 
+    def limbLength(n: Int, j: Int, matrix: Matrix) : Int = {
+        val (i, k ) = ( ( j + 1) % n, (j + 2) % n)
+        var minLen = (matrix(i)(j) + matrix(j)(k) - matrix(i)(k) ) / 2
+        for {
+            i <- 0 to n - 1
+            k <- i + 1 to n - 1
+            if ! (i == j || k == j)
+        } yield  {
+            val currLen = ( matrix(i)(j) + matrix(j)(k) - matrix(i)(k) ) / 2
+            minLen = if (minLen > currLen) currLen else minLen
+        }
+        minLen
+    }
 }
