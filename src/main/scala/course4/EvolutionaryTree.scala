@@ -1,5 +1,9 @@
 package course4
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+
+
 object EvolutionaryTree {
 
     final case class Edge(from: Int, to: Int, weight: Int)
@@ -7,6 +11,7 @@ object EvolutionaryTree {
     type Edges = Array[Edge]
     type Matrix = Array[Row]
     type Strings = Array[String]
+    type Tree = Edges
 
     implicit def stringToStrings(input: String) : Strings =
         input
@@ -73,4 +78,102 @@ object EvolutionaryTree {
         }
         minLen
     }
+
+    /*
+    Data:
+    edge:       {0: [1], 1: [0]}
+    weight:     {(0, 1): 13, (1, 0): 13}
+    x: 2
+    i: 1
+    k: 0
+    Result:
+    i_near 4 k_near = 0 i_x 2 n_x 11
+
+     */
+
+    def findNearest(edges : Array[Array[Int]], weight: Matrix, x: Int, i: Int, k: Int): (Int, Int, Int, Int) = {
+        var queue = new mutable.Queue[List[Int]]()
+        queue +=  List(i)
+        var visited = Set( i )
+        var findPath = List[Int]()
+
+        while( queue.length > 0){
+            val path = queue.dequeue()
+            val node = path.last
+            visited += node
+            if (node == k) {
+                findPath = path
+                queue.clear()
+            }  else {
+                for {
+                    next_node <- edges(node)
+                    if !visited.contains(next_node)
+                } yield {
+                    queue += ( path :+ next_node)
+                }
+            }
+        }
+
+        var dist = 0
+        (0 to findPath.length - 1)
+          .foldLeft( None : Option[(Int, Int, Int, Int)] )( (curr : Option[(Int, Int, Int, Int)], K) => {
+            curr match {
+                case None =>
+                    val (i, j) = ( findPath(K), findPath(K + 1) )
+                    if (dist + weight(i)(j)  > x) {
+                        Some((i, j, x - dist, dist + weight(i)(j) - x))
+                    } else {
+                        dist += weight(i)(j)
+                        curr
+                    }
+                case Some(_) =>
+                    curr
+            }
+          } ).get
+    }
+
+    /*
+        Code Challenge: Implement AdditivePhylogeny to solve the Distance-Based Phylogeny Problem.
+        Input: An integer n followed by a space-separated n x n distance matrix.
+        Output: A weighted adjacency list for the simple tree fitting this matrix.
+     */
+    def additivePhylogeny( D: Matrix, n: Int, inner_n: Int): ( Array[Array[Int]], Array[Array[Int]], Int) = {
+        val n = D.length
+        if (n == 2) {
+            val edges = Array(1, 0)
+            val weight : Array[Array[Int]] = Array.fill(2)( Array.fill(2)(0) )
+            weight(0)(1) = D(0)(1)
+            weight(1)(0) = D(0)(1)
+            (edges, weight, inner_n)
+        }
+        val limbLen = limbLength(n, n - 1, D)
+        for {
+            j <- 1 to n - 1
+        } yield {
+            D(j)(n - 1) = D(j)(n - 1) - limbLen
+            D(n - 1)(j) = D(j)(n - 1)
+        }
+
+        val (i, k) = {
+            for {
+                i <- 0 to n - 1
+                k <- 0 to n - 1
+                if D(i)(k) == D(i)(n - 1) + D(n - 1)(k)
+            } yield (i, k)
+        }.headOption match { case Some(a) => (a._1, a._2) case None => (-5, -5) }
+        val x = D(i)(n - 1)
+
+        val (edge, weight, inner_n_)  = additivePhylogeny( D.init.map(_.init), n - 1, inner_n )
+        val (i_n, k_n, i_x, n_x) = findNearest(edge, weight, x, i, k)
+        val new_node = i_n
+        // need to create a new node
+        if (i_x != 0 ){
+
+        }
+        val edges = edge(new_node).toBuffer
+        edges.append(n - 1)
+//        edges(n - 1) =
+        ( Array(), Array(), 0 )
+    }
+
 }

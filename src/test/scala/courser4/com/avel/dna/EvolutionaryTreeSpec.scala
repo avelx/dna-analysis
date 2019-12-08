@@ -6,6 +6,33 @@ class EvolutionaryTreeSpec extends FlatSpec {
 
   import course4.EvolutionaryTree._
 
+  "findNearest" should "work like" in {
+    /*
+Data:
+edge:       {0: [1], 1: [0]}
+weight:     {(0, 1): 13, (1, 0): 13}
+x: 2
+i: 1
+k: 0
+Result:
+i_near 4 k_near = 0 i_x 2 n_x 11
+
+*/
+    val edge = Array(
+      Array(1),
+      Array(0)
+    )
+    val weight = Array.fill(2)( Array.fill(2)(0) )
+    weight(0)(1) = 13
+    weight(1)(0) = 13
+    val (x, i, k) = (2, 1, 0)
+    val (i_near, k_near, i_x, n_x) = findNearest(edge, weight, x, i, k)
+    assert(i_near === 1)
+    assert(k_near === 0)
+    assert(i_x == 2)
+    assert(n_x === 11)
+  }
+
   it should "return 2" in {
     val lines = scala.io.Source.fromFile("src/main/resources/Limb_Length.txt").getLines()
     val matrix: Matrix = lines.toArray.tail.tail
@@ -43,4 +70,18 @@ class EvolutionaryTreeSpec extends FlatSpec {
     assert(result === expected)
   }
 
+  /*
+  "additivePhylogeny(_, _)" should "return edges" in {
+    val matrix : Matrix = Array(
+      Array(0,	13,	21,	22),
+      Array(13,	0,	12,	13),
+      Array(21,	12,	0, 13),
+      Array(22,	13,	13,	0)
+    )
+    val result = additivePhylogeny(matrix)
+    result.foreach(row => {
+      println( row )
+    })
+  }
+  */
 }
