@@ -33,6 +33,37 @@ i_near 4 k_near = 0 i_x 2 n_x 11
     assert(n_x === 11)
   }
 
+  /*
+    [[ 0 13 21 15], [13  0 12  6], [21 12  0  6], [15  6  6  0]]
+    2 0
+   */
+  "find(_ 4)" should "return" in {
+    val matrix : Matrix = Array(
+      Array( 0, 13, 21, 15),
+      Array(13,  0, 12,  6),
+      Array(21, 12,  0,  6),
+      Array(15,  6,  6,  0)
+    )
+    val (i, k) = find(matrix, 4).get
+    assert(i == 2)
+    assert(k == 0)
+  }
+
+  /*
+  [[ 0 13 11], [13  0  2], [11  2  0]]
+  1 0
+   */
+  "find" should "return" in {
+    val matrix : Matrix = Array(
+      Array( 0, 13, 11),
+      Array(13,  0, 2),
+      Array(11, 2,  0),
+    )
+    val (i, k) = find(matrix, 3).get
+    assert(i == 1)
+    assert(k == 0)
+  }
+
   it should "return 2" in {
     val lines = scala.io.Source.fromFile("src/main/resources/Limb_Length.txt").getLines()
     val matrix: Matrix = lines.toArray.tail.tail
@@ -70,7 +101,6 @@ i_near 4 k_near = 0 i_x 2 n_x 11
     assert(result === expected)
   }
 
-  /*
   "additivePhylogeny(_, _)" should "return edges" in {
     val matrix : Matrix = Array(
       Array(0,	13,	21,	22),
@@ -78,10 +108,8 @@ i_near 4 k_near = 0 i_x 2 n_x 11
       Array(21,	12,	0, 13),
       Array(22,	13,	13,	0)
     )
-    val result = additivePhylogeny(matrix)
-    result.foreach(row => {
-      println( row )
-    })
+    val (edges, weight, _) = additivePhylogeny(matrix, 4, 4)
+    edges.foreach(edge => println( edge.mkString(" ") ) )
   }
-  */
+
 }
