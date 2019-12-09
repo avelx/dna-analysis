@@ -22,9 +22,9 @@ i_near 4 k_near = 0 i_x 2 n_x 11
       Array(1),
       Array(0)
     )
-    val weight = Array.fill(2)( Array.fill(2)(0) )
-    weight(0)(1) = 13
-    weight(1)(0) = 13
+    var weight = Map[(Int, Int), Int]()
+    weight = weight + ((0,1) -> 13)
+    weight = weight + ((1,0) -> 13)
     val (x, i, k) = (2, 1, 0)
     val (i_near, k_near, i_x, n_x) = findNearest(edge, weight, x, i, k)
     assert(i_near === 1)

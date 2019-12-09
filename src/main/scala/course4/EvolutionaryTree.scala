@@ -92,7 +92,7 @@ object EvolutionaryTree {
 
    */
 
-  def findNearest(edges: Array[Array[Int]], weight: Matrix, x: Int, i: Int, k: Int): (Int, Int, Int, Int) = {
+  def findNearest(edges: Array[Array[Int]], weight: Map[ (Int, Int), Int], x: Int, i: Int, k: Int): (Int, Int, Int, Int) = {
     var queue = new mutable.Queue[List[Int]]()
     queue += List(i)
     var visited = Set(i)
@@ -121,10 +121,10 @@ object EvolutionaryTree {
         curr match {
           case None =>
             val (i, j) = (findPath(K), findPath(K + 1))
-            if (dist + weight(i)(j) > x) {
-              Some((i, j, x - dist, dist + weight(i)(j) - x))
+            if (dist + weight( (i,j) ) > x) {
+              Some((i, j, x - dist, dist + weight( (i,j) ) - x))
             } else {
-              dist += weight(i)(j)
+              dist += weight(i,j)
               curr
             }
           case Some(_) =>
@@ -148,40 +148,72 @@ object EvolutionaryTree {
       Input: An integer n followed by a space-separated n x n distance matrix.
       Output: A weighted adjacency list for the simple tree fitting this matrix.
    */
-  def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Array[Array[Int]], Array[Array[Int]], Int) = {
+  def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Array[Array[Int]], Map[(Int,Int), Int], Int) = {
+
+    def dropIndex[T](a: List[T], index: Int): List[T] = {
+      def dropIndexAcc(in: List[T], acc: List[T], p: Int) : List[T] = in match {
+        case Nil => acc
+        case h::tail =>
+          if (p != index) dropIndexAcc(tail, acc :+ h, p + 1)
+          else dropIndexAcc(tail, acc, p + 1)
+      }
+      dropIndexAcc(a, List(), 0)
+    }
+
     if (n == 2) {
       val edges = Array(
         Array(1),
         Array(0)
       )
-      val weight: Array[Array[Int]] = Array.fill(2)(Array.fill(2)(0))
-      weight(0)(1) = D(0)(1)
-      weight(1)(0) = D(0)(1)
+      var weight  = Map[ (Int, Int), Int]()
+      weight = weight + ( (0,1) -> D(0)(1) )
+      weight = weight + ( (1, 0) -> D(0)(1) )
       return (edges, weight, inner_n)
     }
     val limbLen = limbLength(n, n - 1, D)
+//    for {
+//      j <- 1 to n - 1
+//    } yield {
+//      D(j)(n - 1) = D(j)(n - 1) - limbLen
+//      D(n - 1)(j) = D(j)(n - 1)
+//    }
+
     for {
-      j <- 1 to n - 1
+      i <- 0 to n - 1
     } yield {
-      D(j)(n - 1) = D(j)(n - 1) - limbLen
-      D(n - 1)(j) = D(j)(n - 1)
+      D(i)(n - 1) = D(i)(n - 1) - limbLen
+      D(n  - 1)(i) = D(n  - 1)(i) - limbLen
     }
 
     val (i, k) = find(D, n).getOrElse( (-5, -5) )
     val x = D(i)(n - 1)
 
-    val (edge, weight, inner_n_) = additivePhylogeny(D.init.map(_.init), n - 1, inner_n)
+    var (edge, weight, inner_n_) = additivePhylogeny(D.init.map(_.init), n - 1, inner_n)
     val (i_n, k_n, i_x, n_x) = findNearest(edge, weight, x, i, k)
-    val new_node = i_n
+    var new_node = inner_n_
 
     // need to create a new node
     if (i_x != 0) {
-      val inner_n_A = inner_n_ + 1
-      edge(i_n)
+      new_node = i_n
+
+      edge(i_n) = dropIndex( edge(i_n).toList, k_n ).toArray
+      edge(k_n) = dropIndex( edge(k_n).toList, i_n ).toArray
+      edge(i_n) = edge(i_n) :+ new_node
+      edge(k_n) = edge(i_n) :+ new_node
+      edge(new_node) = Array(i_n, k_n)
+
+      weight = weight + ( (new_node, i_n) -> i_x )
+      weight = weight + ( (i_n, new_node) -> i_x )
+      weight = weight + ( (new_node, k_n) -> n_x )
+      weight = weight + ( (k_n, new_node) -> n_x )
+      weight = weight - ( (i_n, k_n) )
+      weight = weight - ( (k_n, i_n) )
+
     }
 
-    weight(n - 1)(new_node) = limbLen
-    weight(new_node)(n - 1) = limbLen
+    weight = weight + ((n - 1, new_node) ->  limbLen)
+    weight = weight + ((new_node, n - 1) ->  limbLen)
+
     (edge :+ Array(new_node), weight, inner_n_)
   }
 
