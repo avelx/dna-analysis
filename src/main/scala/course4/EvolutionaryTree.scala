@@ -92,7 +92,7 @@ object EvolutionaryTree {
 
    */
 
-  def findNearest(edges: Array[Array[Int]], weight: Map[ (Int, Int), Int], x: Int, i: Int, k: Int): (Int, Int, Int, Int) = {
+  def findNearest(edges: Map[Int, Array[Int]], weight: Map[ (Int, Int), Int], x: Int, i: Int, k: Int): (Int, Int, Int, Int) = {
     var queue = new mutable.Queue[List[Int]]()
     queue += List(i)
     var visited = Set(i)
@@ -148,7 +148,7 @@ object EvolutionaryTree {
       Input: An integer n followed by a space-separated n x n distance matrix.
       Output: A weighted adjacency list for the simple tree fitting this matrix.
    */
-  def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Array[Array[Int]], Map[(Int,Int), Int], Int) = {
+  def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Map[Int, Array[Int]], Map[(Int,Int), Int], Int) = {
 
     def dropIndex[T](a: List[T], index: Int): List[T] = {
       def dropIndexAcc(in: List[T], acc: List[T], p: Int) : List[T] = in match {
@@ -161,10 +161,9 @@ object EvolutionaryTree {
     }
 
     if (n == 2) {
-      val edges = Array(
-        Array(1),
-        Array(0)
-      )
+      var edges = Map[ Int, Array[Int]]()
+      edges = edges + (0 -> Array(1))
+      edges = edges + (1 -> Array(0) )
       var weight  = Map[ (Int, Int), Int]()
       weight = weight + ( (0,1) -> D(0)(1) )
       weight = weight + ( (1, 0) -> D(0)(1) )
@@ -196,11 +195,12 @@ object EvolutionaryTree {
     if (i_x != 0) {
       new_node = i_n
 
-      edge(i_n) = dropIndex( edge(i_n).toList, k_n ).toArray
-      edge(k_n) = dropIndex( edge(k_n).toList, i_n ).toArray
-      edge(i_n) = edge(i_n) :+ new_node
-      edge(k_n) = edge(i_n) :+ new_node
-      edge(new_node) = Array(i_n, k_n)
+      edge = edge + (i_n -> dropIndex( edge(i_n).toList, k_n ).toArray )
+
+      edge = edge + (k_n -> dropIndex( edge(k_n).toList, i_n ).toArray )
+      edge = edge + (i_n -> ( edge(i_n).toList :+ new_node ).toArray )
+      edge = edge + (k_n -> ( edge(i_n).toList :+ new_node).toArray )
+      edge = edge + (new_node -> Array(i_n, k_n) )
 
       weight = weight + ( (new_node, i_n) -> i_x )
       weight = weight + ( (i_n, new_node) -> i_x )
@@ -211,10 +211,13 @@ object EvolutionaryTree {
 
     }
 
+    edge = edge + (new_node -> (edge(new_node).toList :+ (n - 1)).toArray )
+    edge = edge + ( (n - 1)  -> Array(new_node) )
+
     weight = weight + ((n - 1, new_node) ->  limbLen)
     weight = weight + ((new_node, n - 1) ->  limbLen)
 
-    (edge :+ Array(new_node), weight, inner_n_)
+    (edge, weight, i_n)
   }
 
 }
