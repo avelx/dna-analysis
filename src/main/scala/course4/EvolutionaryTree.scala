@@ -2,6 +2,7 @@ package course4
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 
 object EvolutionaryTree {
@@ -157,7 +158,7 @@ object EvolutionaryTree {
           if (p != index) dropIndexAcc(tail, acc :+ h, p + 1)
           else dropIndexAcc(tail, acc, p + 1)
       }
-      dropIndexAcc(a, List(), 0)
+      Try{ dropIndexAcc(a, List(), 0) }.toOption.getOrElse(a)
     }
 
     if (n == 2) {
@@ -170,12 +171,6 @@ object EvolutionaryTree {
       return (edges, weight, inner_n)
     }
     val limbLen = limbLength(n, n - 1, D)
-//    for {
-//      j <- 1 to n - 1
-//    } yield {
-//      D(j)(n - 1) = D(j)(n - 1) - limbLen
-//      D(n - 1)(j) = D(j)(n - 1)
-//    }
 
     for {
       i <- 0 to n - 1
@@ -188,26 +183,27 @@ object EvolutionaryTree {
     val x = D(i)(n - 1)
 
     var (edge, weight, inner_n_) = additivePhylogeny(D.init.map(_.init), n - 1, inner_n)
-    val (i_n, k_n, i_x, n_x) = findNearest(edge, weight, x, i, k)
-    var new_node = inner_n_
+    var (i_near, k_near, i_x, n_x) = findNearest(edge, weight, x, i, k)
+    var new_node = i_near
 
     // need to create a new node
     if (i_x != 0) {
-      new_node = i_n
+      new_node = inner_n_
+      inner_n_ + 1
 
-      edge = edge + (i_n -> dropIndex( edge(i_n).toList, k_n ).toArray )
+      edge = edge + (i_near -> dropIndex( edge(i_near).toList, k_near ).toArray )
 
-      edge = edge + (k_n -> dropIndex( edge(k_n).toList, i_n ).toArray )
-      edge = edge + (i_n -> ( edge(i_n).toList :+ new_node ).toArray )
-      edge = edge + (k_n -> ( edge(i_n).toList :+ new_node).toArray )
-      edge = edge + (new_node -> Array(i_n, k_n) )
+      edge = edge + (k_near -> dropIndex( edge(k_near).toList, i_near ).toArray )
+      edge = edge + (i_near -> ( edge(i_near).toList :+ new_node ).toArray )
+      edge = edge + (k_near -> ( edge(i_near).toList :+ new_node).toArray )
+      edge = edge + (new_node -> Array(i_near, k_near) )
 
-      weight = weight + ( (new_node, i_n) -> i_x )
-      weight = weight + ( (i_n, new_node) -> i_x )
-      weight = weight + ( (new_node, k_n) -> n_x )
-      weight = weight + ( (k_n, new_node) -> n_x )
-      weight = weight - ( (i_n, k_n) )
-      weight = weight - ( (k_n, i_n) )
+      weight = weight + ( (new_node, i_near) -> i_x )
+      weight = weight + ( (i_near, new_node) -> i_x )
+      weight = weight + ( (new_node, k_near) -> n_x )
+      weight = weight + ( (k_near, new_node) -> n_x )
+      weight = weight - ( (i_near, k_near) )
+      weight = weight - ( (k_near, i_near) )
 
     }
 
@@ -217,7 +213,7 @@ object EvolutionaryTree {
     weight = weight + ((n - 1, new_node) ->  limbLen)
     weight = weight + ((new_node, n - 1) ->  limbLen)
 
-    (edge, weight, i_n)
+    (edge, weight, inner_n_)
   }
 
 }
