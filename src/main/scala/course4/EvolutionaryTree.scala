@@ -144,20 +144,25 @@ object EvolutionaryTree {
       }.headOption
   }
 
+  class ListExtension[T](a: List[T]) {
+    def -(v: T): List[T] = {
+      def dropValAcc(in: List[T], acc: List[T]) : List[T] = in match {
+        case Nil => acc
+        case h::tail => if (h == v) dropValAcc(tail, acc) else dropValAcc(tail, acc :+ h)
+      }
+      dropValAcc(a, List() )
+    }
+  }
+
+  implicit def listToListExtension[T](l : List[T]) = new ListExtension[T](l)
+
+
   /*
       Code Challenge: Implement AdditivePhylogeny to solve the Distance-Based Phylogeny Problem.
       Input: An integer n followed by a space-separated n x n distance matrix.
       Output: A weighted adjacency list for the simple tree fitting this matrix.
    */
   def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Map[Int, Array[Int]], Map[(Int,Int), Int], Int) = {
-
-    def remove[T](a: List[T], v: Int): List[T] = {
-      def dropValAcc(in: List[T], acc: List[T]) : List[T] = in match {
-        case Nil => acc
-        case h::tail => if (h == v) dropValAcc(tail, acc) else dropValAcc(tail, acc :+ h)
-      }
-      Try{ dropValAcc(a, List() ) }.toOption.getOrElse({ a })
-    }
 
     if (n == 2) {
       var edges = Map[ Int, Array[Int]]()
@@ -170,6 +175,7 @@ object EvolutionaryTree {
     }
 
     val limbLen = limbLength(n, n - 1, D)
+    //
     for {
       i <- 0 to n - 1
     } yield {
@@ -177,17 +183,16 @@ object EvolutionaryTree {
       D(n  - 1)(i) = if ( D(n  - 1)(i) - limbLen >= 0) D(n  - 1)(i) - limbLen else  0
     }
 
-    val (i, k) = find(D, n).getOrElse( (-5, -5) )
-    val x = D(i)(n - 1)
+    val (i, k) = find(D, n).get
 
     var (edge, weight, inner_n_) = additivePhylogeny(D.init.map(_.init), n - 1, inner_n)
-    val (i_near, k_near, i_x, n_x) = findNearest(edge, weight, x, i, k)
+    val (i_near, k_near, i_x, n_x) = findNearest(edge, weight, D(i)(n - 1), i, k)
     var new_node = i_near
 
     if (i_x != 0) {
       new_node = inner_n_
-      edge = edge + (i_near -> remove( edge(i_near).toList, k_near ).toArray )
-      edge = edge + (k_near -> remove( edge(k_near).toList, i_near ).toArray )
+      edge = edge + (i_near -> ( edge(i_near).toList - k_near ).toArray )
+      edge = edge + (k_near -> ( edge(k_near).toList - i_near ).toArray )
       edge = edge + (i_near -> ( edge(i_near).toList :+ new_node ).toArray )
       edge = edge + (k_near -> ( edge(k_near).toList :+ new_node).toArray )
       edge = edge + (new_node -> Array(i_near, k_near) )

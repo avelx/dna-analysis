@@ -103,13 +103,14 @@ class EvolutionaryTreeSpec extends FlatSpec {
 
   "additivePhylogeny( someMatrix, 4, 4)" should "return edges" in {
     import Matchers._
-    val matrix : Matrix = Array(
-      Array(0,	13,	21,	22),
-      Array(13,	0,	12,	13),
-      Array(21,	12,	0, 13),
-      Array(22,	13,	13,	0)
-    )
-    val (edges, weight, _) = additivePhylogeny(matrix, 4, 4)
+    val lines = scala.io.Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/additivePolygeny.txt").getLines()
+    val data = lines.toList
+    val n = data.head.toInt
+    val matrix = data.tail.toArray
+      .map(_.split("\t"))
+      .map(_.map(_.toInt).toArray[Int])
+
+    val (edges, weight, _) = additivePhylogeny(matrix, n, n)
     var expectedEdges  = Map[Int, Array[Int]]()
     expectedEdges = expectedEdges + ( 0 -> Array(4))
     expectedEdges = expectedEdges + ( 1 -> Array(4))
@@ -121,16 +122,16 @@ class EvolutionaryTreeSpec extends FlatSpec {
     edges.map(p => (p._1, p._2.distinct.sorted) ) should be equals expectedEdges
 
     var weightExpected  = Map[ (Int, Int), Int]()
-    weightExpected = weightExpected + ( (4, 1) -> 2 )
-    weightExpected = weightExpected + ((1, 4) -> 2)
-    weightExpected = weightExpected + ( (4, 0) -> 11)
     weightExpected = weightExpected + ( (0, 4) -> 11)
-    weightExpected = weightExpected + ( (5, 2) -> 6)
+    weightExpected = weightExpected + ((1, 4) -> 2)
     weightExpected = weightExpected + ( (2, 5) -> 6)
-    weightExpected = weightExpected + ( (5, 4) -> 4)
-    weightExpected = weightExpected + ((4, 5) -> 4)
     weightExpected = weightExpected + ( (3, 5) -> 7)
+    weightExpected = weightExpected + ( (4, 0) -> 11)
+    weightExpected = weightExpected + ((4, 5) -> 4)
+    weightExpected = weightExpected + ( (4, 1) -> 2 )
+    weightExpected = weightExpected + ( (5, 4) -> 4)
     weightExpected = weightExpected + ((5, 3) -> 7)
+    weightExpected = weightExpected + ( (5, 2) -> 6)
     weight should be equals weightExpected
 
   }
