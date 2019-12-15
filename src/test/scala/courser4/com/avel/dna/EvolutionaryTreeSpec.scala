@@ -119,7 +119,10 @@ class EvolutionaryTreeSpec extends FlatSpec {
     expectedEdges = expectedEdges + ( 5 -> Array(2, 3, 4))
     expectedEdges = expectedEdges + ( 3 -> Array(5))
 
-    edges.map(p => (p._1, p._2.distinct.sorted) ) should be equals expectedEdges
+    edges.foreach(edge => {
+      val expEdge = expectedEdges(edge._1)
+      expEdge should contain theSameElementsAs edge._2
+    })
 
     var weightExpected  = Map[ (Int, Int), Int]()
     weightExpected = weightExpected + ( (0, 4) -> 11)
@@ -132,7 +135,7 @@ class EvolutionaryTreeSpec extends FlatSpec {
     weightExpected = weightExpected + ( (5, 4) -> 4)
     weightExpected = weightExpected + ((5, 3) -> 7)
     weightExpected = weightExpected + ( (5, 2) -> 6)
-    weight should be equals weightExpected
+    weight.toList should contain theSameElementsAs weightExpected.toList
 
   }
 
