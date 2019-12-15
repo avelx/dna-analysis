@@ -102,6 +102,7 @@ class EvolutionaryTreeSpec extends FlatSpec {
   }
 
   "additivePhylogeny(_, _)" should "return edges" in {
+    import Matchers._
     val matrix : Matrix = Array(
       Array(0,	13,	21,	22),
       Array(13,	0,	12,	13),
@@ -109,7 +110,23 @@ class EvolutionaryTreeSpec extends FlatSpec {
       Array(22,	13,	13,	0)
     )
     val (edges, weight, _) = additivePhylogeny(matrix, 4, 4)
-    edges.foreach(edge => println( edge._2.mkString(" ") ) )
+    var expectedEdges  = Map[Int, Array[Int]]()
+    expectedEdges = expectedEdges + ( 0 -> Array(4))
+    expectedEdges = expectedEdges + ( 1 -> Array(4))
+    expectedEdges = expectedEdges + ( 4 -> Array(0, 1, 5))
+    expectedEdges = expectedEdges + ( 2 -> Array(5))
+    expectedEdges = expectedEdges + ( 5 -> Array(2, 3, 4))
+    expectedEdges = expectedEdges + ( 3 -> Array(5))
+
+    //assert(edges.map(p => (p._1, p._2.distinct.sorted) ) == expectedEdges)
+    edges.map(p => (p._1, p._2.distinct.sorted) ) should be equals expectedEdges
+
+    /*
+    Edges
+    {0: [4], 1: [4], 4: [1, 0, 5], 2: [5], 5: [2, 4, 3], 3: [5]}
+    Weight:
+    {(4, 1): 2, (1, 4): 2, (4, 0): 11, (0, 4): 11, (5, 2): 6, (2, 5): 6, (5, 4): 4, (4, 5): 4, (3, 5): 7, (5, 3): 7}
+     */
   }
 
 }

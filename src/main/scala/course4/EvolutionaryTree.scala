@@ -151,14 +151,15 @@ object EvolutionaryTree {
    */
   def additivePhylogeny(D: Matrix, n: Int, inner_n: Int): (Map[Int, Array[Int]], Map[(Int,Int), Int], Int) = {
 
-    def dropIndex[T](a: List[T], index: Int): List[T] = {
-      def dropIndexAcc(in: List[T], acc: List[T], p: Int) : List[T] = in match {
+    def dropVal[T](a: List[T], v: Int): List[T] = {
+      def dropValAcc(in: List[T], acc: List[T]) : List[T] = in match {
         case Nil => acc
-        case h::tail =>
-          if (p != index) dropIndexAcc(tail, acc :+ h, p + 1)
-          else dropIndexAcc(tail, acc, p + 1)
+        case h::tail => if (h == v) dropValAcc(tail, acc) else dropValAcc(tail, acc :+ h)
       }
-      Try{ dropIndexAcc(a, List(), 0) }.toOption.getOrElse(a)
+      Try{ dropValAcc(a, List() ) }.toOption.getOrElse({
+        println("Got error!")
+        a
+      })
     }
 
     if (n == 2) {
@@ -175,8 +176,8 @@ object EvolutionaryTree {
     for {
       i <- 0 to n - 1
     } yield {
-      D(i)(n - 1) = D(i)(n - 1) - limbLen
-      D(n  - 1)(i) = D(n  - 1)(i) - limbLen
+      D(i)(n - 1) = if ( D(i)(n - 1) - limbLen >= 0) D(i)(n - 1) - limbLen else 0
+      D(n  - 1)(i) = if ( D(n  - 1)(i) - limbLen >= 0) D(n  - 1)(i) - limbLen else  0
     }
 
     val (i, k) = find(D, n).getOrElse( (-5, -5) )
@@ -186,16 +187,14 @@ object EvolutionaryTree {
     var (i_near, k_near, i_x, n_x) = findNearest(edge, weight, x, i, k)
     var new_node = i_near
 
-    // need to create a new node
     if (i_x != 0) {
       new_node = inner_n_
-      inner_n_ + 1
+      inner_n_ = inner_n_ + 1
 
-      edge = edge + (i_near -> dropIndex( edge(i_near).toList, k_near ).toArray )
-
-      edge = edge + (k_near -> dropIndex( edge(k_near).toList, i_near ).toArray )
-      edge = edge + (i_near -> ( edge(i_near).toList :+ new_node ).toArray )
-      edge = edge + (k_near -> ( edge(i_near).toList :+ new_node).toArray )
+      edge = edge + (i_near -> dropVal( edge(i_near).toList, k_near ).toArray.distinct )
+      edge = edge + (k_near -> dropVal( edge(k_near).toList, i_near ).toArray.distinct )
+      edge = edge + (i_near -> ( edge(i_near).toList :+ new_node ).toArray.distinct )
+      edge = edge + (k_near -> ( edge(k_near).toList :+ new_node).toArray.distinct )
       edge = edge + (new_node -> Array(i_near, k_near) )
 
       weight = weight + ( (new_node, i_near) -> i_x )
