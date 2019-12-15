@@ -168,18 +168,14 @@ object EvolutionaryTree {
                Map[ (Int, Int), Int]((0,1) -> D(0)(1), (1, 0) -> D(0)(1)),
                inner_n)
     val limbLen = limbLength(n, n - 1, D)
-    for {
-      i <- 0 to n - 1
-    } yield {
-      D(i)(n - 1) = if ( D(i)(n - 1) - limbLen >= 0) D(i)(n - 1) - limbLen else 0
-      D(n  - 1)(i) = if ( D(n - 1)(i) - limbLen >= 0) D(n  - 1)(i) - limbLen else  0
-    }
+    (0 to n - 1).foreach(i  => {
+      D(i)(n - 1) = if (D(i)(n - 1) - limbLen >= 0) D(i)(n - 1) - limbLen else 0
+      D(n - 1)(i) = if (D(n - 1)(i) - limbLen >= 0) D(n - 1)(i) - limbLen else 0
+    })
     val (i, k) = find(D, n).get
-
     var (edge, weight, inner_n_) = additivePhylogeny(D.init.map(_.init), n - 1, inner_n)
     val (i_near, k_near, i_x, n_x) = findNearest(edge, weight, D(i)(n - 1), i, k)
     var new_node = i_near
-
     if (i_x != 0) {
       new_node = inner_n_
       edge = edge + (i_near -> ( edge(i_near) - k_near ) )
@@ -194,12 +190,10 @@ object EvolutionaryTree {
       weight = weight - ( (i_near, k_near) )
       weight = weight - ( (k_near, i_near) )
     }
-
     edge = edge + (new_node -> (edge(new_node) :+ (n - 1)) )
     edge = edge + ( (n - 1)  -> List(new_node) )
     weight = weight + ((n - 1, new_node) ->  limbLen)
     weight = weight + ((new_node, n - 1) ->  limbLen)
-
     (edge, weight, if (i_x != 0) inner_n_ + 1 else inner_n_)
   }
 
