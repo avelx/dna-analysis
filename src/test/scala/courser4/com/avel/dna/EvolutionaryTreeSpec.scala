@@ -123,6 +123,7 @@ class EvolutionaryTreeSpec extends FlatSpec {
       val expEdge = expectedEdges(edge._1)
       expEdge should contain theSameElementsAs edge._2
     })
+    edges.size should be equals expectedEdges.size
 
     var weightExpected  = Map[ (Int, Int), Int]()
     weightExpected = weightExpected + ( (0, 4) -> 11)
