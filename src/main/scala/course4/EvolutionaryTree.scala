@@ -197,4 +197,79 @@ object EvolutionaryTree {
     (edge, weight, if (i_x != 0) inner_n_ + 1 else inner_n_)
   }
 
+  def argmin(M: Array[Array[Float]]) : Int = {
+    case class P( element: Float, index: Int, found: Int )
+    M.flatten.foldLeft( P(Int.MaxValue,0, 0) )( (curr, e) =>
+      if (e != 0.0F && curr.element > e) P(e, curr.index + 1, curr.index)
+      else  P(curr.element, curr.index + 1, curr.found) )
+      .found
+  }
+
+  def upgma(d: Matrix, n: Int) : Array[Array[Int]] = {
+
+    def delete[T](l: List[T], idx: Array[Int]) : List[T] =
+      idx.foldLeft(l)( (result, index) => result.take(index) ++ result.drop(index + 1))
+
+    var D : Array[Array[Float]] = d.map(_.map(_.toFloat))
+    var clusters : Array[Array[Int]] = {
+      for {
+        i <- 0 to n - 1
+      } yield Array(i, 1)
+    } toArray
+
+    val adj : ListBuffer[Array[Int]] = ListBuffer.fill(n)( Array[Int]() )
+    val age = ListBuffer.fill(n)(0.0F)
+
+    if (D.length <= 1)
+      return adj.toArray
+
+    var stop = false
+    while (!stop){
+      val index = argmin(D)
+      val i : Int = index / D.length
+      val j : Int = index % D.length
+      val i_new = adj.length
+      adj.append( Array() )
+      val C_new = Array(i_new, clusters(i)(1) + clusters(j)(1) )
+      adj(i_new) = adj(i_new) :+ clusters(i)(0)
+      adj(i_new) = adj(i_new) :+ clusters(j)(0)
+
+      adj(clusters(i)(0)) =  adj(clusters(i)(0)) :+ i_new
+      adj(clusters(j)(0)) =  adj(clusters(i)(0)) :+ i_new
+
+      age.append( D(i)(j) / 2)
+
+      if (D.length == 2)
+        stop = true
+
+      var d_new = {
+        val A = D(i).map(_ * clusters(i)(1) )
+        val B = D(j).map(_ * clusters(j)(1) )
+        val d = clusters(i)(1) + clusters(j)(1)
+
+        (0 to A.length).map(i => (A(i) + B(i) ) / d )
+      }.toList
+      d_new = delete(d_new, Array(i, j) )
+
+      D(0) = delete(D(0).toList, Array(i, j)).toArray
+      D(1) = delete(D(1).toList, Array(i, j)).toArray
+
+      D = D :+ d_new.toArray
+      d_new = d_new :+ Float.MaxValue
+      D = D :+ d_new.toArray
+
+      if (i < j) {
+        clusters = delete( clusters.toList, Array(j) ).toArray
+        clusters = delete( clusters.toList, Array(i) ).toArray
+      } else {
+        clusters = delete( clusters.toList, Array(i) ).toArray
+        clusters = delete( clusters.toList, Array(j) ).toArray
+      }
+
+      clusters = clusters :+ C_new
+    }
+
+    Array()
+  }
+
 }

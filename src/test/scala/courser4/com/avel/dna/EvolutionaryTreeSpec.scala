@@ -140,4 +140,49 @@ class EvolutionaryTreeSpec extends FlatSpec {
 
   }
 
+  "argmin" should "return " in {
+//    val d = Array[Array[Int]](
+//      Array(-6, -6, 5),
+//      Array(-5, 8, 9)
+//    )
+    val d = Array[Array[Int]](
+      Array(0,	13,	21,	22),
+      Array(13,	0,	12,	13),
+      Array(21,	12,	0, 13),
+      Array(22,	13,	13,	0)
+    )
+    val D : Array[Array[Float]] = d.map(_.map(_.toFloat))
+    val index = argmin(D)
+    assert(index === 6)
+  }
+
+
+  "UPGMA" should "return next result" in {
+    val path = "/Users/pavel/Sources/dna-analysis/src/main/resources/upgma.txt"
+    val lines = scala.io.Source.fromFile(path).getLines()
+    val data = lines.toList
+    val n = data.head.toInt
+
+    val matrix = data.tail.toArray
+      .map(_.split("\t"))
+      .map(_.map(_.toInt).toArray[Int])
+
+    val expected =
+      """
+        |0->5:7.000
+        |1->6:8.833
+        |2->4:5.000
+        |3->4:5.000
+        |4->2:5.000
+        |4->3:5.000
+        |4->5:2.000
+        |5->0:7.000
+        |5->4:2.000
+        |5->6:1.833
+        |6->5:1.833
+        |6->1:8.833
+        |""".stripMargin
+
+    val result = upgma(matrix, n)
+  }
 }
