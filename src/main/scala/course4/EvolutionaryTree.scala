@@ -1,8 +1,8 @@
 package course4
 
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
 
 
 object EvolutionaryTree {
@@ -14,6 +14,9 @@ object EvolutionaryTree {
   type Matrix = Array[Row]
   type Strings = Array[String]
   type Tree = Edges
+
+  type Min = Int
+  type Chracter = Int
 
   implicit def stringToStrings(input: String): Strings =
     input
@@ -197,7 +200,7 @@ object EvolutionaryTree {
     (edge, weight, if (i_x != 0) inner_n_ + 1 else inner_n_)
   }
 
-  def argmin(M: Array[Array[Float]]) : Int = {
+  def argmin_S(M: Array[Array[Float]]) : Int = {
     case class P( element: Float, index: Int, found: Int )
     M.flatten.foldLeft( P(Int.MaxValue,0, 0) )( (curr, e) =>
       if (e != 0.0F && curr.element > e) P(e, curr.index + 1, curr.index)
@@ -207,10 +210,14 @@ object EvolutionaryTree {
 
   def upgma(d: Matrix, n: Int) : Array[Array[Int]] = {
 
+    import breeze.linalg._
+    import breeze.numerics._
+
     def delete[T](l: List[T], idx: Array[Int]) : List[T] =
       idx.foldLeft(l)( (result, index) => result.take(index) ++ result.drop(index + 1))
 
-    var D : Array[Array[Float]] = d.map(_.map(_.toFloat))
+    val D =  DenseMatrix( d.map(_.map(_.toFloat)) :_*)
+
     var clusters : Array[Array[Int]] = {
       for {
         i <- 0 to n - 1
@@ -220,14 +227,14 @@ object EvolutionaryTree {
     val adj : ListBuffer[Array[Int]] = ListBuffer.fill(n)( Array[Int]() )
     val age = ListBuffer.fill(n)(0.0F)
 
-    if (D.length <= 1)
+    if (D.size <= 1)
       return adj.toArray
 
     var stop = false
     while (!stop){
-      val index = argmin(D)
-      val i : Int = index / D.length
-      val j : Int = index % D.length
+      val index = argmin(D)._1
+      val i : Int = index / D.size
+      val j : Int = index % D.size
       val i_new = adj.length
       adj.append( Array() )
       val C_new = Array(i_new, clusters(i)(1) + clusters(j)(1) )
@@ -237,39 +244,65 @@ object EvolutionaryTree {
       adj(clusters(i)(0)) =  adj(clusters(i)(0)) :+ i_new
       adj(clusters(j)(0)) =  adj(clusters(i)(0)) :+ i_new
 
-      age.append( D(i)(j) / 2)
+      age.append( D(i, j) / 2)
 
-      if (D.length == 2)
+      if (D.size == 2)
         stop = true
 
-      var d_new = {
-        val A = D(i).map(_ * clusters(i)(1) )
-        val B = D(j).map(_ * clusters(j)(1) )
+//      var d_new = {
+        val A =  D(i, ::)
         val d = clusters(i)(1) + clusters(j)(1)
 
-        (0 to A.length).map(i => (A(i) + B(i) ) / d )
-      }.toList
-      d_new = delete(d_new, Array(i, j) )
+//        Array()
+//      }.toList
+//      d_new = delete(d_new, Array(i, j) )
 
-      D(0) = delete(D(0).toList, Array(i, j)).toArray
-      D(1) = delete(D(1).toList, Array(i, j)).toArray
-
-      D = D :+ d_new.toArray
-      d_new = d_new :+ Float.MaxValue
-      D = D :+ d_new.toArray
-
-      if (i < j) {
-        clusters = delete( clusters.toList, Array(j) ).toArray
-        clusters = delete( clusters.toList, Array(i) ).toArray
-      } else {
-        clusters = delete( clusters.toList, Array(i) ).toArray
-        clusters = delete( clusters.toList, Array(j) ).toArray
-      }
-
-      clusters = clusters :+ C_new
+//      D(0) = delete(D(0).toList, Array(i, j)).toArray
+//      D(1) = delete(D(1).toList, Array(i, j)).toArray
+//
+//      D = D :+ d_new.toArray
+//      d_new = d_new :+ Float.MaxValue
+//      D = D :+ d_new.toArray
+//
+//      if (i < j) {
+//        clusters = delete( clusters.toList, Array(j) ).toArray
+//        clusters = delete( clusters.toList, Array(i) ).toArray
+//      } else {
+//        clusters = delete( clusters.toList, Array(i) ).toArray
+//        clusters = delete( clusters.toList, Array(j) ).toArray
+//      }
+//
+//      clusters = clusters :+ C_new
     }
 
     Array()
   }
 
+  def squareError(d : Array[Array[Int]], t: Array[Array[Int]]): Int ={
+//    val d = Array(
+//      Array(0, 13, 16, 10),
+//      Array(13, 0, 21, 15),
+//      Array(16, 21, 0, 18),
+//      Array(10, 15, 18, 0)
+//    )
+//
+//    val t = Array(
+//      Array(0, 14, 17, 11),
+//      Array(14, 0, 21, 15),
+//      Array(17, 21, 0, 18),
+//      Array(11, 15, 18, 0)
+//    )
+
+    val discr = for {
+      i <- 0 to 3
+      j <- 0 to 3
+      if i < j
+    } yield {
+      val y = t(i)(j) - d(i)(j)
+      y * y
+    }
+    discr.toList.sum
+  }
+
+  def smallParsimony(T: Tree, C: Chracter) : Min = 5
 }

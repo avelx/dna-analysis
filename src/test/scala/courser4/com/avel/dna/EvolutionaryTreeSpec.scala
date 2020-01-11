@@ -152,7 +152,7 @@ class EvolutionaryTreeSpec extends FlatSpec {
       Array(22,	13,	13,	0)
     )
     val D : Array[Array[Float]] = d.map(_.map(_.toFloat))
-    val index = argmin(D)
+    val index = argmin_S(D)
     assert(index === 6)
   }
 
@@ -184,5 +184,11 @@ class EvolutionaryTreeSpec extends FlatSpec {
         |""".stripMargin
 
     val result = upgma(matrix, n)
+  }
+
+  "smallParsimony" should "return next result" in {
+    val result = smallParsimony( Array(), 1 )
+    val expected = 5
+    assert(result === expected)
   }
 }
