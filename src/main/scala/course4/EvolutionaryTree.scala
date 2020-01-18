@@ -3,6 +3,7 @@ package course4
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 
 object EvolutionaryTree {
@@ -16,7 +17,6 @@ object EvolutionaryTree {
   type Tree = Edges
 
   type Min = Int
-  type Chracter = Int
 
   implicit def stringToStrings(input: String): Strings =
     input
@@ -304,5 +304,27 @@ object EvolutionaryTree {
     discr.toList.sum
   }
 
-  def smallParsimony(T: Tree, C: Chracter) : Min = 5
+  def parsymonyScore(in: List[String])(alphabet: Seq[Char]) : (Int, String) = {
+    val n : Int = in.head.length
+    val res = for {
+      i <- 0 to n - 1
+      c <- in.map(s => s.charAt(i))
+      row = alphabet.map(x => if (x == c) 0 else 1)
+    } yield row
+
+    val rs = res.toList.sliding(4, 4)
+
+    val result = rs.map(row => {
+      row.foldLeft(List.fill(alphabet.length)(0)) {
+        (curr, es) => curr.zip(es).map(x => x._1 + x._2)
+      }
+    })
+
+    val data = result.map(
+      row => row.zipWithIndex.minBy(_._1)
+    )
+
+    val d = data.toList
+    ( d.map(_._1).sum, d.map(x => alphabet(x._2) ).mkString("") )
+  }
 }
