@@ -19,59 +19,93 @@ object ParsimonyApp extends App {
     "6->5"
   )
 
-  val leafs = tree
+  val leafStr = tree
       .map(_.split("->") )
       .filter(x => Try(x(1).toInt).toOption == None)
 
-  val dna = leafs.map(_(1)).toList
+  val dna = leafStr.map(_(1)).toList
   val edges = tree
     .map(_.split("->") )
     .filter(x => Try(x(1).toInt).toOption != None)
     .map(x => List(x(0).toInt, x(1).toInt) )
 
-//  edges.foreach(x => println(x.mkString(" ")) )
+  case class Leaf(id: Int, v: String, score: Array[Array[Int]])
 
-  case class Node(id: Int, v: String, score: Array[Array[Int]])
-
-  val nodes = leafs.map(leaf =>
-    Node(
+  val leafs = leafStr.map(leaf =>
+    Leaf(
       leaf(0).toInt,
       leaf(1),
       leaf(1).toArray.map(c => alphabet.map(x => if (x == c) 0 else 1) )
     )
   )
 
-  var listNode = nodes.clone()
-  val allNodes = new ListBuffer[Node]()
-  nodes.foreach(n => allNodes.append(n))
+  var listNode = leafs.clone()
+  val allLeafs = ListBuffer(leafs: _*)
 
   while( listNode.size > 1 ) {
     val mergeNodes = listNode.groupBy(_.id).map(p => {
       val (left, right) = (p._2(0), p._2(1))
       merge(left, right)
     })
-    allNodes.appendAll(mergeNodes)
+    allLeafs.appendAll(mergeNodes)
     listNode = mergeNodes.toArray
   }
 
-
-  def merge(l: Node, r: Node): Node = {
-    val n = l.v.length
-
+  def merge(l: Leaf, r: Leaf): Leaf = {
     val res = for {
-      i <- 0 to n - 1
+      i <- 0 to l.v.length - 1
       s = l.score(i).zip(r.score(i)).map(p => p._1 + p._2)
     } yield s
     val v = res.map(x => alphabet(x.zipWithIndex.minBy(_._1)._2) ).mkString("")
-    val parentId = edges.find(e => e.tail.contains(l.id) ).getOrElse( List(-1) )(0)
-    Node(parentId, v, res.toArray)
+    edges.find(e => e.tail.contains(l.id) ) match {
+      case Some(ls) => Leaf(ls(0), v, res.toArray)
+      case None => Leaf(-1, v, res.toArray)
+    }
   }
 
-  //val sc = allNodes.find(_.id == -1).get.score.map(_.min).sum
-  //println(sc)
-  println( allNodes.find(_.id == -1).get.v )
+  def getRootNodeId(nodeId : Int) : Int = edges.find(edge => edge(1) == nodeId)  match {
+    case Some(ls) => getRootNodeId(ls(0))
+    case None => nodeId
+  }
 
-  val (score, minStr) = parsymonyScore(dna)(alphabet)
-  println(minStr)
+  val rootNodeId = getRootNodeId(edges.head.last)
 
+  def hammingDistance(x: String, y: String) = {
+    var result = 0
+    for {
+      i <- 0 to x.length - 1
+    } yield {
+      if (x(i) != y(i)) result += 1
+    }
+    result
+  }
+  def iterateTree(parentId: Int) : Unit = edges.filter(e => e(0) == parentId) match {
+    case children => if (children.length > 0){
+      // Computation
+      val from = allLeafs.find(n => n.id == parentId).get
+      for {
+        child <- children
+        node = child(1)
+        to <- allLeafs.filter(n => n.id == node)
+        distance = hammingDistance(from.v, to.v)
+      } yield {
+        println(s"${from.v}->${to.v}:$distance")
+      }
+      children.map(child => iterateTree(child(1)))
+    }
+  }
+
+  allLeafs.find(n => n.id == -1) match {
+    case Some(root) => {
+      println(root.score.map(_.min).sum)
+      iterateTree(rootNodeId)
+    }
+    case None => throw new Error("Processing error")
+  }
+
+  /*
+    Nodes tree represantation is incorrect
+    id and parentId is wired incorrect
+    Possibly need to introduce new type? => Leaf ?
+   */
 }
