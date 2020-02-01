@@ -6,14 +6,10 @@ object ProteomicsRunner extends App {
   val input = "57 71 154 185 301 332 415 429 486"
     .split(" ").map(_.toInt).toList
 
-  //decodingIdealSpectrum(input)
-  /*
-  GPFQG
-  GPFNA
-  GQFPG
-   */
-  val peptide = "GPFNA"
-  println( peptideToSpectrum(peptide) )
+  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
+
+  val peptide = "XZZXX"
+  println( getPeptideVector(peptide)(integer_mass) )
 
 }
 
@@ -94,4 +90,15 @@ object Proteomics {
 
   }
 
+  def getPeptideVector(peptide: String)(integer_mass: Map[String, Int] ): String = {
+    val prefixes = getPrefixes(peptide) :+ peptide
+
+    val positions = prefixes.map(r => {
+      r.map(c => integer_mass(c.toString)).sum
+    })
+
+    val z  = Array.fill(positions.max)(0)
+    positions.map(i => z(i - 1) = 1  )
+    z.mkString(" ")
+  }
 }

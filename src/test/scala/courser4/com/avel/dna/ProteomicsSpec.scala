@@ -35,5 +35,12 @@ class ProteomicsSpec extends FlatSpec {
     assert(expected === result)
   }
 
+  it should "return correct Peptide Vector" in {
+    val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
+    val peptide = "XZZXX"
+    val result =  getPeptideVector(peptide)(integer_mass)
+    val expected = "0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0 0 0 1"
+    assert(result === expected)
+  }
 
 }
