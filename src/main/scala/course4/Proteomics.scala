@@ -1,37 +1,37 @@
 package course4
 
-import course4.ProteomicsRunner.input
-
 object ProteomicsRunner extends App {
   import Proteomics._
 
-  val inputText = "57 71 154 185 301 332 415 429 486"
-  //val inputText = "113 129 269 315 406 414 534 543 640 663 739 776 840 863 897 976 1025 1047 1138 1146 1235 1243 1334 1356 1405 1484 1518 1541 1605 1642 1718 1741 1838 1847 1967 1975 2066 2112 2252 2268 2381"
-  val input = inputText.split(" ").map(_.toInt).toList
+  val input = "57 71 154 185 301 332 415 429 486"
+    .split(" ").map(_.toInt).toList
 
+  //decodingIdealSpectrum(input)
+  /*
+  GPFQG
+  GPFNA
+  GQFPG
+   */
+  val peptide = "GPFNA"
+  println( peptideToSpectrum(peptide) )
 
-  val graph = graphSpectrum(input)
-  graph.foreach(println)
 }
 
 object Proteomics {
 
-  val integer_mass_table : Map[Int, String] = {
+  val integer_mass_table: Map[Int, String] = {
     val data = scala.io.Source
       .fromFile("src/main/resources/integer_mass_table.txt")
       .getLines().toList.map(_.split(" "))
-     data.map(_(1).toInt).zip( data.map(_(0) ) ).toMap
+    data.map(_ (1).toInt).zip(data.map(_ (0))).toMap
   }
 
-  def convolution(a: Array[Int]): Array[(Int, Int)] = {
-    val matrix = for {
-      x <- a
-      y <- a
-      e = x - y
-      if (e > 0)
-    } yield (y, x)
+  val integer_mass_table_revers: Map[String, Int] = {
+    val data = scala.io.Source
+      .fromFile("src/main/resources/integer_mass_table.txt")
+      .getLines().toList.map(_.split(" "))
 
-    matrix.toArray
+    data.map(r => r(0)).zip(data.map(r => r(1).toInt)).toMap
   }
 
   def graphSpectrum(in: List[Int]): List[(Int, Int)] = {
@@ -46,13 +46,52 @@ object Proteomics {
     }
 
     data.toMap
-      .map(r => r._1.split("->") )
-      .map(r => r.map(_.toInt) )
-      .toList.map(r => ( r(0), r(1) ) )
+      .map(r => r._1.split("->"))
+      .map(r => r.map(_.toInt))
+      .toList.map(r => (r(0), r(1)))
+  }
+
+  def getPrefixes(peptide: String): List[String] = {
+    for {
+      i <- 1 to peptide.length - 1
+      p = peptide.substring(0, i)
+    } yield p
+  }.toList
+
+  def getSuffixes(peptide: String) : List[String] = {
+    for {
+      i <- 0 to peptide.length - 2
+      p = peptide.substring(peptide.length - 1 - i, peptide.length)
+    } yield p
+  }.toList
+
+  def peptideToSpectrum(peptide: String) : List[Int] = {
+    val prefixAndSuffix = getPrefixes(peptide) ++ getSuffixes(peptide)
+    (prefixAndSuffix :+ peptide).map(row => row.map(c => integer_mass_table_revers(c.toString) ).sum ).sorted
   }
 
   def decodingIdealSpectrum(spectrum: List[Int]) : String = {
-    ""
+    val graph = graphSpectrum(spectrum)
+
+    def getPaths(s: Int, acc: List[Int]) : List[List[Int]] = graph.filter(e => e._1 == s) match {
+      case h::tail => getPaths(h._2, h._1 :: acc)  ++ tail.map(q => getPaths(q._2, q._1 ::acc)).flatten
+      case Nil => List(s :: acc)
+    }
+
+    val result = getPaths(spectrum.head, List(0) ).map(r => r.reverse)
+    val peptides = result.map(row => {
+      (0 to row.length - 2).map(i => integer_mass_table(row(i + 1) - row(i)) )
+    }).map(_.mkString(""))
+
+    //peptides.foreach(r => println(r.mkString("") ) )
+    peptides.find(peptide => peptideToSpectrum( peptide) == spectrum) match {
+      case Some(p) => {
+        println(p)
+        p
+      }
+      case None => throw new Error("No peptide found for ideal spectrum")
+    }
+
   }
 
 }
