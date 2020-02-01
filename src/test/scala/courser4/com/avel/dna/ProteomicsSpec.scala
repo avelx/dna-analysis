@@ -43,4 +43,12 @@ class ProteomicsSpec extends FlatSpec {
     assert(result === expected)
   }
 
+  it should "return decode peptide from Peptide Vector" in {
+    val vector = "0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0 0 0 1"
+    val integer_mass_revers = Map(4 -> "X", 5 -> "Z" )
+    val result = peptideVectorToPeptide(vector)(integer_mass_revers)
+    val expected = "XZZXX"
+    assert(result === expected)
+  }
+
 }
