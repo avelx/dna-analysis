@@ -51,7 +51,7 @@ object Proteomics {
       .toList.map(r => ( r(0), r(1) ) )
   }
 
-  def decodingIdealSpectrum(spectrum: Array[Int]) : String = {
+  def decodingIdealSpectrum(spectrum: List[Int]) : String = {
     ""
   }
 
