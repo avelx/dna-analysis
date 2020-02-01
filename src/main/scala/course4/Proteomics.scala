@@ -3,13 +3,11 @@ package course4
 object ProteomicsRunner extends App {
   import Proteomics._
 
-  val input = "57 71 154 185 301 332 415 429 486"
-    .split(" ").map(_.toInt).toList
-
-  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
-
-  val peptide = "XZZXX"
-  println( getPeptideVector(peptide)(integer_mass) )
+  //val input = "57 71 154 185 301 332 415 429 486"
+  //  .split(" ").map(_.toInt).toList
+  //val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
+  //val peptide = "KQGVWCSRREGYYCHIKLGCEMP"
+  //println( getPeptideVector(peptide)(integer_mass_table_revers) )
 
 }
 
