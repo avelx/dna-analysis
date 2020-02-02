@@ -5,27 +5,28 @@ import scala.util.Try
 object ProteomicsRunner extends App {
   import Proteomics._
 
-  val spectralVector = "0 0 0 4 -2 -3 -1 -7 6 5 3 2 1 9 3 -8 0 3 1 2 1 8"
-    .split(" ").map(_.toInt)
-  val proteome = "XZZXZXXXZXZZXZXXZ"
-  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
 
-  val cands = for {
-    i <- 0 to proteome.length - 1
-    j <- i to proteome.length - 1
-    candidate = proteome.substring(i, j + 1)
-    candidateScore = candidate.map(c => integer_mass(c.toString)).sum
-    if candidateScore <= spectralVector.length
-    prefixesMasses = ( getPrefixes(candidate) :+ candidate )
-      .map(r => r.map(c => integer_mass(c.toString) ).sum )
-     currScore = prefixesMasses.map(m => spectralVector(m - 1) ).sum
-  } yield  ( candidate, currScore)
 
-  cands.foreach(println)
-  println( cands.maxBy(_._2) )
+  //  println( peptideIdentification(spectralVector, proteome)(integer_mass_table_revers) )
 }
 
 object Proteomics {
+
+  def  peptideIdentification(spectralVector: List[Int], proteome : String)(integer_mass : Map[String, Int]): String = {
+    val n = proteome.length
+    val l = spectralVector.length
+    val cands = for {
+      i <- 0 to n - 1
+      j <- i to n - 1
+      candidate = proteome.substring(i, j + 1)
+      candidateScore = candidate.map(c => integer_mass(c.toString)).sum
+      if candidateScore <= l
+      prefixesMasses = ( getPrefixes(candidate) :+ candidate )
+        .map(r => r.map(c => integer_mass(c.toString) ).sum )
+      currScore = prefixesMasses.map(m => spectralVector(m - 1) ).sum
+    } yield  ( candidate, currScore)
+    cands.maxBy(_._2)._1
+  }
 
   val integer_mass_table: Map[Int, String] = {
     val data = scala.io.Source
