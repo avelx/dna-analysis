@@ -1,59 +1,88 @@
 package course4
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
 
 object ProteomicsRunner extends App {
+
   import Proteomics._
 
-//  val spectralVectors = List(
-//    "-1 5 -4 5 3 -1 -4 5 -1 0 0 4 -1 0 1 4 4 4"
-//      .split(" ")
-//      .map(_.toInt).toList,
-//    "-4 2 -2 -4 4 -5 -1 4 -1 2 5 -3 -1 3 2 -3"
-//      .split(" ")
-//      .map(_.toInt).toList
-//  )
-//  val proteome = "XXXZXZXXZXZXXXZXXZX"
-//  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
-//  val threshold = 5
-//
-//  println(
-//    pmsSearch( spectralVectors, proteome, threshold)(integer_mass)
-//  )
+  val vectorSpectrum = "4 -3 -2 3 3 -4 5 -3 -1 -1 3 4 1 3"
+    .split(" ").map(_.toInt).toList
 
-  //)
-    val data = scala.io.Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_11866_7.txt").getLines().toList
+  val threshold = 1
+  val maxScore = 8
 
-    val spectralVectors = data.init.init.map(s => s.split(" ").map(_.toInt).toList )
+  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
 
-    val proteome = data.init.last
-    val threshold = data.last.toInt
+  var size : Map[(Int, Int), Int] = Map( (0, 0) -> 1)
 
-    println(
-      pmsSearch( spectralVectors, proteome, threshold)(integer_mass_table_revers).mkString("\n")
-    )
+  def getSize(i: Int, t: Int): Int = {
+    if ( size.contains( (i, t)) ) size( (i, t))
+    else if ( i < 0 || t < 0) {
+      size = size + ((i, t) -> 0)
+      0
+    } else integer_mass.map(_._2)
+        .map(m => getSize( i - m, t - vectorSpectrum(i) )).sum
+  }
+
+  val i = vectorSpectrum.length - 1
+  val result = {
+      for {
+        t <- threshold to maxScore + 1
+      } yield getSize(i, t)
+    }.sum
+  println(s"Result: $result")
+
+  //  val spectralVectors = List(
+  //    "-1 5 -4 5 3 -1 -4 5 -1 0 0 4 -1 0 1 4 4 4"
+  //      .split(" ")
+  //      .map(_.toInt).toList,
+  //    "-4 2 -2 -4 4 -5 -1 4 -1 2 5 -3 -1 3 2 -3"
+  //      .split(" ")
+  //      .map(_.toInt).toList
+  //  )
+  //  val proteome = "XXXZXZXXZXZXXXZXXZX"
+  //  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
+  //  val threshold = 5
+  //
+  //  println(
+  //    pmsSearch( spectralVectors, proteome, threshold)(integer_mass)
+  //  )
+
+  /*
+      val data = scala.io.Source.fromFile("/Users/pavel/Sources/dna-analysis/src/main/resources/data/dataset_11866_7.txt").getLines().toList
+
+      val spectralVectors = data.init.init.map(s => s.split(" ").map(_.toInt).toList )
+
+      val proteome = data.init.last
+      val threshold = data.last.toInt
+
+      println(
+        pmsSearch( spectralVectors, proteome, threshold)(integer_mass_table_revers).mkString("\n")
+      )
+   */
+
 }
 
 object Proteomics {
 
   import scala.util.control.Breaks._
 
-  def  peptideIdentification(spectralVector: List[Int], proteome : String)(integer_mass : Map[String, Int]): (String, Int) = {
+  def peptideIdentification(spectralVector: List[Int], proteome: String)(integer_mass: Map[String, Int]): (String, Int) = {
     val n = proteome.length
     val l = spectralVector.length
     val results = ListBuffer[(String, Int)]()
-    for(i <- 0 to n - 1){
+    for (i <- 0 to n - 1) {
       breakable {
         for (j <- i to n - 1) {
           val candidate = proteome.substring(i, j + 1)
           val candidateScore = candidate.map(c => integer_mass(c.toString)).sum
           if (candidateScore > l) break()
-          else if (candidateScore == l){
-            val prefixesMasses = ( getPrefixes(candidate) :+ candidate )
-                    .map(r => r.map(c => integer_mass(c.toString) ).sum )
-            val currScore = prefixesMasses.map(m => spectralVector(m - 1) ).sum
-            results.append( (candidate, currScore) )
+          else if (candidateScore == l) {
+            val prefixesMasses = (getPrefixes(candidate) :+ candidate)
+              .map(r => r.map(c => integer_mass(c.toString)).sum)
+            val currScore = prefixesMasses.map(m => spectralVector(m - 1)).sum
+            results.append((candidate, currScore))
           }
         }
       }
@@ -98,35 +127,35 @@ object Proteomics {
       i <- 1 to peptide.length - 1
       p = peptide.substring(0, i)
     } yield p
-  }.toList
+    }.toList
 
-  def getSuffixes(peptide: String) : List[String] = {
+  def getSuffixes(peptide: String): List[String] = {
     for {
       i <- 0 to peptide.length - 2
       p = peptide.substring(peptide.length - 1 - i, peptide.length)
     } yield p
-  }.toList
+    }.toList
 
-  def peptideToSpectrum(peptide: String) : List[Int] = {
+  def peptideToSpectrum(peptide: String): List[Int] = {
     val prefixAndSuffix = getPrefixes(peptide) ++ getSuffixes(peptide)
-    (prefixAndSuffix :+ peptide).map(row => row.map(c => integer_mass_table_revers(c.toString) ).sum ).sorted
+    (prefixAndSuffix :+ peptide).map(row => row.map(c => integer_mass_table_revers(c.toString)).sum).sorted
   }
 
-  def decodingIdealSpectrum(spectrum: List[Int]) : String = {
+  def decodingIdealSpectrum(spectrum: List[Int]): String = {
     val graph = graphSpectrum(spectrum)
 
-    def getPaths(s: Int, acc: List[Int]) : List[List[Int]] = graph.filter(e => e._1 == s) match {
-      case h::tail => getPaths(h._2, h._1 :: acc)  ++ tail.map(q => getPaths(q._2, q._1 ::acc)).flatten
+    def getPaths(s: Int, acc: List[Int]): List[List[Int]] = graph.filter(e => e._1 == s) match {
+      case h :: tail => getPaths(h._2, h._1 :: acc) ++ tail.map(q => getPaths(q._2, q._1 :: acc)).flatten
       case Nil => List(s :: acc)
     }
 
-    val result = getPaths(spectrum.head, List(0) ).map(r => r.reverse)
+    val result = getPaths(spectrum.head, List(0)).map(r => r.reverse)
     val peptides = result.map(row => {
-      (0 to row.length - 2).map(i => integer_mass_table(row(i + 1) - row(i)) )
+      (0 to row.length - 2).map(i => integer_mass_table(row(i + 1) - row(i)))
     }).map(_.mkString(""))
 
     //peptides.foreach(r => println(r.mkString("") ) )
-    peptides.find(peptide => peptideToSpectrum( peptide) == spectrum) match {
+    peptides.find(peptide => peptideToSpectrum(peptide) == spectrum) match {
       case Some(p) => {
         println(p)
         p
@@ -136,20 +165,20 @@ object Proteomics {
 
   }
 
-  def getPeptideVector(peptide: String)(integer_mass: Map[String, Int] ): String = {
+  def getPeptideVector(peptide: String)(integer_mass: Map[String, Int]): String = {
     val prefixes = getPrefixes(peptide) :+ peptide
 
     val positions = prefixes.map(r => {
       r.map(c => integer_mass(c.toString)).sum
     })
 
-    val z  = Array.fill(positions.max)(0)
-    positions.map(i => z(i - 1) = 1  )
+    val z = Array.fill(positions.max)(0)
+    positions.map(i => z(i - 1) = 1)
     z.mkString(" ")
   }
 
-  def peptideVectorToPeptide(vector: String)(integer_mass_revers: Map[Int, String] ) : String = {
-    val positions = vector.split(" ").zipWithIndex.map(p => if (p._1.equals("1")) p._2 + 1 else 0 ).filter(e => e > 0)
+  def peptideVectorToPeptide(vector: String)(integer_mass_revers: Map[Int, String]): String = {
+    val positions = vector.split(" ").zipWithIndex.map(p => if (p._1.equals("1")) p._2 + 1 else 0).filter(e => e > 0)
     val result = for {
       i <- 1 to positions.length - 1
       x = positions(i) - positions(i - 1)
@@ -158,13 +187,13 @@ object Proteomics {
     data.map(e => integer_mass_revers(e)).mkString("")
   }
 
-  def pmsSearch(spectralVectors: List[List[Int]], proteome: String, threashHold: Int)(integer_mass : Map[String, Int]): Set[String] = {
+  def pmsSearch(spectralVectors: List[List[Int]], proteome: String, threashHold: Int)(integer_mass: Map[String, Int]): Set[String] = {
     var psm = Set[String]()
 
     spectralVectors.foreach(vector => {
-      val peptidePair = peptideIdentification(vector, proteome )(integer_mass)
+      val peptidePair = peptideIdentification(vector, proteome)(integer_mass)
       if (peptidePair._2 >= threashHold)
-        psm =psm + peptidePair._1
+        psm = psm + peptidePair._1
     })
 
     psm
