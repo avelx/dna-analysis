@@ -6,32 +6,16 @@ object ProteomicsRunner extends App {
 
   import Proteomics._
 
-  val vectorSpectrum = "4 -3 -2 3 3 -4 5 -3 -1 -1 3 4 1 3"
+ val vectorSpectrum = 0 :: "-3 -2 7 10 7 6 1 12 -7 -5 8 -6 -4 -2 1 -8 -4 11 -8 4 -10 -6 7 -8 10 -8 0 1 11 6 -10 5 3 2 -6 -7 -9 12 -9 7 12 15 -1 -8 0 10 -3 3 8 14 10 13 13 2 2 15 -5 5 0 11 5 2 7 8 15 9 5 12 15 15 0 10 6 1 5 9 -7 6 3 -3 0 -6 -4 -7 15 -7 13 -4 -1 15 -9 11 12 -8 8 -2 -9 -6 3 12 -2 14 -3 -6 10 1 -6 9 -10 0 7 15 9 12 4 -7 -10 -4 15 1 9 5 -6 -4 14 -1 11 -7 10 8 8 8 2 -2 -2 1 15 5 3 15 -5 13 5 -10 -4 -10 9 -6 -10 1 -6 -4 8 15 14 9 3 10 13 6 -10 -7 -4 6 11 5 13 7 -1 2 -1 9 2 8 15 10 -4 3 3 12 -3 14 4 -2 -8 8 -6 7 -2 12 -7 3 -9 15 0 -8 7 6 4 -2 -2 -8 -6 11 3 5 -7 2 -5 4 7 12 1 6 -2 13 9 11 14 -2 1 -4 7 1 -3 15 -5 5 -5 -2 15 -10 -7 3 0 -9 -8 -1 3 -6 -3 4 12 -5 -10 -9 14 9 -6 13 7 -1 13 -4 13 -3 8 12 -5 7 9 7 8 -1 8 14 8 -9 -5 -9 12 14 -4 11 -10 8 11 -10 -10 12 8 13 1 -9 13 7 3 12 -2 -1 1 4 -1 1 13 -8 14 3 -2 -3 13 -2 9 12 1 2 3 -6 6 -3 -7 6 -5 12 2 -1 9 -5 7 15 -3 -7 5 3 4 7 1 13 -8 8 3 12 15 -6 -8 15 4 0 -5 -5 -9 1 8 7 -7 -9 -7 2 -7 14 5 2 -7 11 3 1 -2 1 -8 8 -7 -9 4 -7 -9 -3 1 10 -6 -3 12 13 2 6 7 14 3 4 -9 5 -9 -9 5 -10 14 9 5 -6 4 -2 -3 4 -1 -1 1 -9 -3 0 -7 -5 -6 -5 12 -9 1 -1 14 5 0 -1 -4 4 3 4 3 2 15 6 15 -6 15 -5 12 15 15 3 0 2 0 -10 -8 12 15 -9 -4 3 -5 -4 -4 0 7 0 -4 -4 2 11 12 11 1 10 2 13 14 10 3 -1 1 11 2 8 -1 13 -4 6 -5 1 12 7 6 10 -6"
     .split(" ").map(_.toInt).toList
 
-  val threshold = 1
-  val maxScore = 8
+//    val vectorSpectrum = 0 :: "4 -3 -2 3 3 -4 5 -3 -1 -1 3 4 1 3"
+//      .split(" ").map(_.toInt).toList
 
-  val integer_mass : Map[String, Int] = Map("X" -> 4, "Z" -> 5)
+  val threshold = 38
+  val maxScore = 200
 
-  var size : Map[(Int, Int), Int] = Map( (0, 0) -> 1)
-
-  def getSize(i: Int, t: Int): Int = {
-    if ( size.contains( (i, t)) ) size( (i, t))
-    else if ( i < 0 || t < 0) {
-      size = size + ((i, t) -> 0)
-      0
-    } else integer_mass.map(_._2)
-        .map(m => getSize( i - m, t - vectorSpectrum(i) )).sum
-  }
-
-  val i = vectorSpectrum.length - 1
-  val result = {
-      for {
-        t <- threshold to maxScore + 1
-      } yield getSize(i, t)
-    }.sum
-  println(s"Result: $result")
+  println( getSpectralDictionarySize(vectorSpectrum, threshold, maxScore, integer_mass_table_revers) )
 
   //  val spectralVectors = List(
   //    "-1 5 -4 5 3 -1 -4 5 -1 0 0 4 -1 0 1 4 4 4"
@@ -67,6 +51,32 @@ object ProteomicsRunner extends App {
 object Proteomics {
 
   import scala.util.control.Breaks._
+
+  def getSpectralDictionarySize(vectorSpectrum: List[Int], threshold: Int, maxScore : Int, integer_mass: Map[String, Int]): Int = {
+    var size : Map[(Int, Int), Int] = Map( (0, 0) -> 1)
+
+    def getSize(i: Int, t: Int): Int = {
+      if ( size.contains( (i, t)) )
+        size( (i, t) )
+      else if ( i < 0 || t < 0) {
+        size = size + ((i, t) -> 0)
+        0
+      } else {
+        val s = integer_mass.map(_._2)
+          .map(m => getSize( i - m, t - vectorSpectrum(i) )).sum
+        size = size + ((i, t) -> s)
+        s
+      }
+    }
+
+    val i = vectorSpectrum.length - 1
+    val result = {
+      for {
+        t <- threshold to maxScore + 1
+      } yield getSize(i, t)
+      }.sum
+    result
+  }
 
   def peptideIdentification(spectralVector: List[Int], proteome: String)(integer_mass: Map[String, Int]): (String, Int) = {
     val n = proteome.length
