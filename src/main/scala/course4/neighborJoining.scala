@@ -1,50 +1,75 @@
 package course4
 
-import spire.math.algebraic.BigDecimalApproximations.MathContextOps
+import scala.collection.mutable.ListBuffer
 
 object c4week3Runner extends App {
 
   import TreeReconstruction._
 
-  type Matrix = Array[Array[Int]]
+  type Matrix = Map[Int, Map[Int, Int] ]
+  type Tree = Map[Int, List[Int]]
 
-  val ddd = readMaxtrixFromFile("src/main/resources/data/dataset_nja.txt")
-  var size_ = ddd.size
-  val dA = iterate(ddd)
-  val dB = iterate(dA)
+  var tree : Tree = Map[Int, List[Int] ]()
 
-  dB.foreach(row => println(row._2.values.mkString(" ")))
+  val data = ListBuffer[ Matrix ](  readMaxtrixFromFile("src/main/resources/data/dataset_nja.txt") )
+  var distances = Map[(Int, Int), Int]()
 
-  //  val ms = getPairs(d)
-  //  val n = d.size
-  //  var (matrix_, nodesUp) = prepareMatrix(n, ms, d)
-  //
-  //  println(nodesUp)
-  //  for {
-  //    x <- nodesUp.toList
-  //    row = ( ms.map(i => d(x)(i) ).sum  - d( ms.head )( ms.last ) ) / 2
-  //  } yield {
-  //    var me = matrix_(x)
-  //    me = me + (n -> row)
-  //    matrix_ = matrix_ + (x -> me)
-  //
-  //    var me_ = matrix_(n)
-  //    me_ = me_ + (x -> row)
-  //    matrix_ = matrix_ + (n -> me_)
-  //     //mr = mr + ((x, ms.last) -> row)
-  //  }
-  //  matrix_.foreach(row => println(row._2.values.mkString(" ")))
+  var originalSize = data.head.size
+  var current : Matrix = data.head
+  while(current.size > 2){
+    current = iterate(current)
+    data.append(current)
+  }
+  //current.foreach(row => println(row._2.values.mkString(" ")))
+
+  var finalKeys : List[Int] = current.keys.toList
+  val df : List[Int] = finalKeys.last :: tree(finalKeys.head)
+  tree += (finalKeys.head -> df )
+
+  val g = current(finalKeys.last)
+  distances += ((finalKeys.head, finalKeys.last) -> g(finalKeys.head) )
+  distances += ((finalKeys.last, finalKeys.head) -> g(finalKeys.head) )
+
+  var delta : Int = g(finalKeys.head)
+
+  //current = data.init.last
+
+
+  distanceRecalc(data.toList.sortBy(_.size).tail)
+
+  // TODO : Travers from joiner to then end of the tree with no calculated edges
+  def distanceRecalc(in : List[ Matrix ]) : Unit = in match {
+    case h::tail => {
+      (finalKeys.toSet intersect h.keys.toSet[Int] ).foreach(joiner => {
+                for {
+                  x <- h(joiner).keys
+                } yield {
+                  val z = h(joiner)
+                  if (joiner != x)
+                    distances += ((joiner, x) -> (z(x) - delta))
+                }
+      })
+      finalKeys = h.keys.toList
+      //println(h.mkString(" "))
+      distanceRecalc(tail)
+    }
+    case Nil => Unit
+  }
+
+  distances.foreach(row => println(s"${row._1} -> ${row._2}"))
+  //tree.foreach( r => println(s"${r._1} -> ${r._2.mkString(" ")}" ) )
 
   def iterate(in: Map[Int, Map[Int, Int]]): Map[Int, Map[Int, Int]] = {
-    val ms = getPairs(in)
+    val mergeSet = getPairs(in)
+
     val n = in.size
-    var (matrix_, nodesUp) = prepareMatrix(n, ms, in)
+    var (matrix_, nodesUp) = prepareMatrix(n, mergeSet, in)
 
     val z = matrix_.keys.last
     for {
       x <- nodesUp.toList
-      a = ms.map(i => in(x)(i)).sum
-      b = in(ms.head)(ms.last)
+      a = mergeSet.map(i => in(x)(i)).sum
+      b = in(mergeSet.head)(mergeSet.last)
       row =  (a - b) / 2
     } yield {
       var me = matrix_(x)
@@ -63,8 +88,11 @@ object c4week3Runner extends App {
   def prepareMatrix(k: Int, merge: Set[Int], f: Map[Int, Map[Int, Int]]): (Map[Int, Map[Int, Int]], Set[Int]) = {
     val nodes = f.keys.toSet[Int]
     val nodesUp = nodes -- merge
-    val nodesUp_ = nodesUp + size_
-    size_ += 1
+
+    tree += (originalSize -> List(merge.head, merge.last) )
+
+    val nodesUp_ = nodesUp + originalSize
+    originalSize += 1
 
     var tmpMx_ : Map[Int, Map[Int, Int]] = nodesUp_
       .map(e => (e, nodesUp_.map(p => (p, 0)).toMap)).toMap
@@ -113,8 +141,6 @@ object c4week3Runner extends App {
     }
     Set(0, 0)
   }
-
-  println("This is not a test")
 }
 
 object TreeReconstruction {
