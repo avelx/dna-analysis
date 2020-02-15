@@ -7,51 +7,148 @@ object c4week3Runner extends App {
   import TreeReconstruction._
 
   type Matrix = Map[Int, Map[Int, Int] ]
-  type Tree = Map[Int, List[Int]]
 
-  var tree : Tree = Map[Int, List[Int] ]()
+  case class Edge(f: Int, t: Int)
+  var tree  = ListBuffer[Edge]()
 
   val data = ListBuffer[ Matrix ](  readMaxtrixFromFile("src/main/resources/data/dataset_nja.txt") )
   var distances = Map[(Int, Int), Int]()
 
-  var originalSize = data.head.size
+  var vertexCounter = data.head.size
   var current : Matrix = data.head
   while(current.size > 2){
     current = iterate(current)
     data.append(current)
   }
+  tree.append( Edge(vertexCounter - 2, vertexCounter - 1) )
+  tree.appendAll( tree.map(e => Edge(e.t, e.f)) )
   //current.foreach(row => println(row._2.values.mkString(" ")))
 
   var finalKeys : List[Int] = current.keys.toList
-  val df : List[Int] = finalKeys.last :: tree(finalKeys.head)
-  tree += (finalKeys.head -> df )
-
   val g = current(finalKeys.last)
   distances += ((finalKeys.head, finalKeys.last) -> g(finalKeys.head) )
   distances += ((finalKeys.last, finalKeys.head) -> g(finalKeys.head) )
 
   var delta : Int = g(finalKeys.head)
 
+  val base : List[Int] = List(vertexCounter - 2, vertexCounter - 1)
+
+
+  val a : List[List[Int]] = travers(base.head, List(base.head) )
+  //++ data.init.last.keys.toList.map(e => travers(e, List(e) ) ).flatten
+
+  // Filter or by size or by source (base?)
+  val c = a.filter(e => e.length > 2).map(_.head)
+  val b =  travers(c.head, List(c.head) ).sortWith((f,g) => f.length > g.length).map(_.reverse)
+
+  println("A")
+  b.foreach(e => println( e.mkString(" ") ) )
+  println("C")
+
+
+  distanceUpdate(a)
+
+  distanceUpdate(b)
+
+
+
+  def distanceUpdate(in : List[List[Int]]) : Unit = {
+    in.foreach(path => {
+      val res = {
+        val x = findDistance( path.head, path.last)
+        if (!x.isDefined )
+          findDistance( path.last, path.head)
+        else x
+      }
+      if ( res.isDefined){
+        var d = res.get
+        val coords = path.sliding(2).toList.reverse
+        if ( distances.contains( (coords.head.head, coords.head.last) ) ){
+          val z = distances( (coords.head.head, coords.head.last) )
+          d = d - z
+          coords.tail.foreach(c => {
+            if ( !distances.contains( (c.head, c.last) ) ) {
+              distances += ((c.head, c.last) -> d)
+              distances += ((c.last, c.head) -> d)
+            } else {
+              d = d  - distances((c.head, c.last))
+            }
+          })
+        }
+        else if (distances.contains( (coords.last.head, coords.last.last) )) {
+          val z = distances( (coords.last.head, coords.last.last) )
+          d = d - z
+          coords.reverse.tail.foreach(c => {
+            if ( !distances.contains( (c.head, c.last) ) ) {
+              distances += ((c.head, c.last) -> d)
+              distances += ((c.last, c.head) -> d)
+            } else {
+              d = d  - distances((c.head, c.last))
+            }
+          })
+        } else {
+          //println(s"NOT FOUND: ${coords.last.head} - ${coords.last.last}")
+        }
+      }
+      else {
+        //println(s"NOT FOUND2: ${path.head} ${path.last}")
+      }
+    })
+  }
+
+  distances.foreach(p => println(s"${p._1} - ${p._2}"))
+
+  def findDistance(x: Int, y: Int) : Option[Int] = {
+    {
+      for {
+        m <- data
+        if m.contains(x)
+        z = m(x)
+        if z.contains(y)
+      } yield z
+      }.headOption match {
+      case Some(r) => Some(r(y))
+      case _ => None
+    }
+  }
+
+  def travers(root: Int, acc: List[Int]): List[List[Int]] = tree.filter(e => e.f == root && !acc.contains(e.t) ).toList match {
+    case h::tail => travers(h.t, h.t :: acc) ++ tail.map(e => travers(e.t, e.t :: acc)).flatten
+    case Nil => List(acc)
+  }
+
+
   //current = data.init.last
-
-
-  distanceRecalc(data.toList.sortBy(_.size).tail)
+  //distanceRecalc(data.toList.sortBy(_.size).tail, vertexCounter - 2, List( List(vertexCounter - 1, vertexCounter - 2) ) )
 
   // TODO : Travers from joiner to then end of the tree with no calculated edges
-  def distanceRecalc(in : List[ Matrix ]) : Unit = in match {
+  def distanceRecalc(in : List[ Matrix ], counter: Int, baseEdges: List[ List[Int]] ) : Unit = in match {
     case h::tail => {
-      (finalKeys.toSet intersect h.keys.toSet[Int] ).foreach(joiner => {
-                for {
-                  x <- h(joiner).keys
-                } yield {
-                  val z = h(joiner)
-                  if (joiner != x)
-                    distances += ((joiner, x) -> (z(x) - delta))
-                }
-      })
-      finalKeys = h.keys.toList
+      val f = h(counter)
+      println(s"LOG: $counter")
+      val res = for {
+        edges <- baseEdges
+      } yield {
+        h(counter).filter(p => p._2 != 0)
+          .map(p =>  p._1)
+          .filter(e => !edges.contains(e)).map(x => edges :+ x)
+
+      }.toList
+
+      res.foreach(row => println( row.mkString(" ") ) )
+
+//      (finalKeys.toSet intersect h.keys.toSet[Int] ).foreach(joiner => {
+//                for {
+//                  x <- h(joiner).keys
+//                } yield {
+//                  val z = h(joiner)
+//                  if (joiner != x)
+//                    distances += ((joiner, x) -> (z(x) - delta))
+//                }
+//      })
+//      finalKeys = h.keys.toList
       //println(h.mkString(" "))
-      distanceRecalc(tail)
+      distanceRecalc(tail, counter - 1, res.flatten)
     }
     case Nil => Unit
   }
@@ -89,10 +186,12 @@ object c4week3Runner extends App {
     val nodes = f.keys.toSet[Int]
     val nodesUp = nodes -- merge
 
-    tree += (originalSize -> List(merge.head, merge.last) )
+    tree.append( Edge(vertexCounter, merge.head) )
+    tree.append( Edge(vertexCounter, merge.last) )
 
-    val nodesUp_ = nodesUp + originalSize
-    originalSize += 1
+
+    val nodesUp_ = nodesUp + vertexCounter
+    vertexCounter += 1
 
     var tmpMx_ : Map[Int, Map[Int, Int]] = nodesUp_
       .map(e => (e, nodesUp_.map(p => (p, 0)).toMap)).toMap
