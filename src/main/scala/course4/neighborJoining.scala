@@ -11,7 +11,8 @@ object c4week3Runner extends App {
   case class Edge(f: Int, t: Int)
   var tree  = ListBuffer[Edge]()
 
-  val data = ListBuffer[ Matrix ](  readMaxtrixFromFile("src/main/resources/data/dataset_nja.txt") )
+  val path = "src/main/resources/data/dataset_njc.txt"
+  val data = ListBuffer[ Matrix ](  readMaxtrixFromFile(path) )
   var distances = Map[(Int, Int), Int]()
 
   var vertexCounter = data.head.size
@@ -22,7 +23,6 @@ object c4week3Runner extends App {
   }
   tree.append( Edge(vertexCounter - 2, vertexCounter - 1) )
   tree.appendAll( tree.map(e => Edge(e.t, e.f)) )
-  //current.foreach(row => println(row._2.values.mkString(" ")))
 
   var finalKeys : List[Int] = current.keys.toList
   val g = current(finalKeys.last)
@@ -33,24 +33,17 @@ object c4week3Runner extends App {
 
   val base : List[Int] = List(vertexCounter - 2, vertexCounter - 1)
 
-
   val a : List[List[Int]] = travers(base.head, List(base.head) )
-  //++ data.init.last.keys.toList.map(e => travers(e, List(e) ) ).flatten
 
   // Filter or by size or by source (base?)
   val c = a.filter(e => e.length > 2).map(_.head)
   val b =  travers(c.head, List(c.head) ).sortWith((f,g) => f.length > g.length).map(_.reverse)
 
-  println("A")
-  b.foreach(e => println( e.mkString(" ") ) )
-  println("C")
-
-
   distanceUpdate(a)
-
   distanceUpdate(b)
 
-
+  distances.foreach(p =>
+    println(s"${p._1._1}->${p._1._2}:" + f"${p._2}%2.3f"))
 
   def distanceUpdate(in : List[List[Int]]) : Unit = {
     in.foreach(path => {
@@ -96,8 +89,6 @@ object c4week3Runner extends App {
     })
   }
 
-  distances.foreach(p => println(s"${p._1} - ${p._2}"))
-
   def findDistance(x: Int, y: Int) : Option[Int] = {
     {
       for {
@@ -117,15 +108,12 @@ object c4week3Runner extends App {
     case Nil => List(acc)
   }
 
-
-  //current = data.init.last
-  //distanceRecalc(data.toList.sortBy(_.size).tail, vertexCounter - 2, List( List(vertexCounter - 1, vertexCounter - 2) ) )
-
   // TODO : Travers from joiner to then end of the tree with no calculated edges
   def distanceRecalc(in : List[ Matrix ], counter: Int, baseEdges: List[ List[Int]] ) : Unit = in match {
     case h::tail => {
       val f = h(counter)
-      println(s"LOG: $counter")
+      //println(s"LOG: $counter")
+      //println(s"LOG: $counter")
       val res = for {
         edges <- baseEdges
       } yield {
@@ -135,7 +123,7 @@ object c4week3Runner extends App {
 
       }.toList
 
-      res.foreach(row => println( row.mkString(" ") ) )
+      //res.foreach(row => println( row.mkString(" ") ) )
 
 //      (finalKeys.toSet intersect h.keys.toSet[Int] ).foreach(joiner => {
 //                for {
@@ -153,7 +141,7 @@ object c4week3Runner extends App {
     case Nil => Unit
   }
 
-  distances.foreach(row => println(s"${row._1} -> ${row._2}"))
+  //distances.foreach(row => println(s"${row._1} -> ${row._2}"))
   //tree.foreach( r => println(s"${r._1} -> ${r._2.mkString(" ")}" ) )
 
   def iterate(in: Map[Int, Map[Int, Int]]): Map[Int, Map[Int, Int]] = {
