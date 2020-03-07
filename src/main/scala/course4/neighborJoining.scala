@@ -6,14 +6,14 @@ object c4week3Runner extends App {
 
   import TreeReconstruction._
 
-  type Matrix = Map[Int, Map[Int, Int] ]
+  type Matrix = Map[Int, Map[Int, Float] ]
 
   case class Edge(f: Int, t: Int)
   var tree  = ListBuffer[Edge]()
 
-  val path = "src/main/resources/data/dataset_njc.txt"
+  val path = "src/main/resources/data/dataset_njz.txt"
   val data = ListBuffer[ Matrix ](  readMaxtrixFromFile(path) )
-  var distances = Map[(Int, Int), Int]()
+  var distances = Map[(Int, Int), Float]()
 
   var vertexCounter = data.head.size
   var current : Matrix = data.head
@@ -29,7 +29,7 @@ object c4week3Runner extends App {
   distances += ((finalKeys.head, finalKeys.last) -> g(finalKeys.head) )
   distances += ((finalKeys.last, finalKeys.head) -> g(finalKeys.head) )
 
-  var delta : Int = g(finalKeys.head)
+  var delta = g(finalKeys.head)
 
   val base : List[Int] = List(vertexCounter - 2, vertexCounter - 1)
 
@@ -89,7 +89,7 @@ object c4week3Runner extends App {
     })
   }
 
-  def findDistance(x: Int, y: Int) : Option[Int] = {
+  def findDistance(x: Int, y: Int) : Option[Float] = {
     {
       for {
         m <- data
@@ -144,7 +144,7 @@ object c4week3Runner extends App {
   //distances.foreach(row => println(s"${row._1} -> ${row._2}"))
   //tree.foreach( r => println(s"${r._1} -> ${r._2.mkString(" ")}" ) )
 
-  def iterate(in: Map[Int, Map[Int, Int]]): Map[Int, Map[Int, Int]] = {
+  def iterate(in: Map[Int, Map[Int, Float]]): Map[Int, Map[Int, Float]] = {
     val mergeSet = getPairs(in)
 
     val n = in.size
@@ -155,7 +155,7 @@ object c4week3Runner extends App {
       x <- nodesUp.toList
       a = mergeSet.map(i => in(x)(i)).sum
       b = in(mergeSet.head)(mergeSet.last)
-      row =  (a - b) / 2
+      row = (a - b) / 2
     } yield {
       var me = matrix_(x)
       me = me + (z -> row)
@@ -170,7 +170,7 @@ object c4week3Runner extends App {
     matrix_
   }
 
-  def prepareMatrix(k: Int, merge: Set[Int], f: Map[Int, Map[Int, Int]]): (Map[Int, Map[Int, Int]], Set[Int]) = {
+  def prepareMatrix(k: Int, merge: Set[Int], f: Map[Int, Map[Int, Float]]): (Map[Int, Map[Int, Float]], Set[Int]) = {
     val nodes = f.keys.toSet[Int]
     val nodesUp = nodes -- merge
 
@@ -181,8 +181,8 @@ object c4week3Runner extends App {
     val nodesUp_ = nodesUp + vertexCounter
     vertexCounter += 1
 
-    var tmpMx_ : Map[Int, Map[Int, Int]] = nodesUp_
-      .map(e => (e, nodesUp_.map(p => (p, 0)).toMap)).toMap
+    var tmpMx_ : Map[Int, Map[Int, Float]] = nodesUp_
+      .map(e => (e, nodesUp_.map(p => (p, 0F)).toMap)).toMap
 
     nodesUp.sliding(2, 2).foreach(p => {
       val (x, y) = (p.head, p.last)
@@ -197,11 +197,11 @@ object c4week3Runner extends App {
     (tmpMx_, nodesUp)
   }
 
-  def getPairs(mx: Map[Int, Map[Int, Int]]): Set[Int] = {
-    val totalDistance : Map[Int, Int] = mx.map(p => (p._1, p._2.values.sum) )
+  def getPairs(mx: Map[Int, Map[Int, Float]]): Set[Int] = {
+    val totalDistance : Map[Int, Float] = mx.map(p => (p._1, p._2.values.sum) )
     val nodes = mx.keys.toSet
-    var tmpMx : Map[Int, Map[Int, Int]] = nodes
-      .map(e => (e, nodes.map(p => (p, 0)).toMap)).toMap
+    var tmpMx : Map[Int, Map[Int, Float]] = nodes
+      .map(e => (e, nodes.map(p => (p, 0F)).toMap)).toMap
 
     for {
       i <- mx.keys.toList
@@ -213,13 +213,16 @@ object c4week3Runner extends App {
       tmpMx = tmpMx + (i -> me)
     }
 
+    //println("A")
+    //tmpMx.foreach(row => println( s"${row._1} =>" + row._2.values.mkString(" ")) )
+
     //val result = tmp.sliding(mx.size, mx.size).toArray
     val m = minPair(tmpMx)
     m
   }
 
-  def minPair(mx: Map[Int, Map[Int, Int]]): Set[Int] = {
-    val minElement: Int = mx.values.map(_.values).flatten.min
+  def minPair(mx: Map[Int, Map[Int, Float]]): Set[Int] = {
+    val minElement = mx.values.map(_.values).flatten.min
     for (i <- mx.keys) {
       for (j <- mx.keys) {
         if (mx(i)(j) == minElement)
@@ -232,12 +235,12 @@ object c4week3Runner extends App {
 
 object TreeReconstruction {
 
-  def readMaxtrixFromFile(filePath: String): Map[Int, Map[Int, Int]] = {
+  def readMaxtrixFromFile(filePath: String): Map[Int, Map[Int, Float]] = {
     val data = scala.io.Source.fromFile(filePath).getLines().toList
     val matrix = {
       for {
         r <- 0 to data.length - 1
-        line = data(r).split(" ").zipWithIndex.map(p => (p._2, p._1.toInt))
+        line = data(r).split(" ").zipWithIndex.map(p => (p._2, p._1.toFloat))
       } yield (r, line.toMap)
       }.toMap
     matrix
