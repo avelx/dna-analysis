@@ -18,7 +18,7 @@ object Cluster {
       c <- centers
       distance = d(dataPoint, c)
     } yield  distance
-    result.min
+    if (result.isEmpty) 0d else result.min
   }
 
   def maxDistance(data: Seq[Point], centers: Seq[Point]) : (Double, Point) = {

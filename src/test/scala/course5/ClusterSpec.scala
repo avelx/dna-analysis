@@ -39,14 +39,22 @@ class ClusterSpec extends FlatSpec {
       |5.0 5.0
       |0.0 5.0
       |""".stripMargin in {
-    val (k, m) = (3, 2)
-    val in : Seq[Point] = Seq(
-      Point( Seq(0.0d, 0.0d) ), Point( Seq(5.0d, 5.0d) ),
-      Point( Seq(0.0d, 5.0d) ), Point( Seq(1.0d, 1.0d) ),
-      Point( Seq(2.0d, 2.0d) ), Point( Seq(3.0d, 3.0d) ),
-      Point( Seq(1.0d, 2.0d) )
-    )
+
+    val lines = scala.io.Source.fromFile("/src/main/resources/data/farthestfisttraversal.txt")
+      .getLines().toList
+    val (k, m) = {
+      val r = lines.head.split(" ").map(_.toInt)
+      (r(0), r(1) )
+    }
+    val in = lines.tail
+      .map( _.split(" ") )
+      .map( row => Point(row.map(_.toDouble)) )
+
     val acutal = farthesFirstTraversal(k, m, in)
+    acutal.foreach(p => {
+      println(p)
+    })
+
     val expected = Seq(
       Point( Seq(0.0d, 0.0d) ),
       Point( Seq(5.0d, 5.0d) ),
