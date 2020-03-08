@@ -1,6 +1,8 @@
 package course5
 
 import org.scalatest._
+import org.scalactic._
+import scala.util.Try
 
 class ClusterSpec extends FlatSpec {
 
@@ -63,4 +65,29 @@ class ClusterSpec extends FlatSpec {
     assert(acutal === expected)
   }
 
+  "Compute distortion for ..." should " return 18.24556" in {
+    val lines = scala.io.Source.fromFile("/Users/pavel/devcore/sources/dna-analysis/src/main/resources/data/distortion.txt")
+      .getLines().toList
+
+    var isCenter = true
+    val in = lines.tail
+      .map( _.split(" ") )
+      .map( row => Try { Point( row.toSeq.map(_.toDouble)) }.toOption )
+      .map(e => e match {
+        case Some(p) => (Some(p), isCenter)
+        case None => {
+          isCenter = !isCenter
+          (None, isCenter)
+        }
+      }).filter(e => e._1.isDefined)
+    val (centers, data) = {
+      val (a, b) = in.partition(e => e._2 == true)
+      (a.map(_._1.get), b.map(_._1.get))
+    }
+
+    implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.01)
+    val actual = distortion(data, centers)
+    val expected : Double = 18.246
+    assert(actual === expected)
+  }
 }

@@ -12,7 +12,7 @@ object Cluster {
     Math.sqrt(result.sum.toDouble)
   }
 
-  /* Distance from DataPoint to Centers */
+  /* distance from data point to neares centers */
   def dc(dataPoint: Point, centers: Seq[Point]) : Double = {
     val result = for {
       c <- centers
@@ -36,6 +36,15 @@ object Cluster {
       centers = centers + pair._2
     }
     centers.toList
+  }
+
+  def distortion(data : Seq[Point], centers: Seq[Point]) : Double = {
+    val n = data.length
+    val all = for {
+      point <- data
+      distance  = dc(point, centers)
+    } yield distance * distance
+    all.sum / n
   }
 
 }
