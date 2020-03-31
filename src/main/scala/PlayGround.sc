@@ -1,5 +1,11 @@
+import course5.Cluster._
 
+val data = Array( Point(Seq(2, 8)), Point( Seq(2, 5) ), Point( Seq(6, 9) ), Point( Seq( 7, 5) ), Point( Seq(5, 2) ) )
+val centers = Array( Point( Seq(3, 5) ), Point( Seq(5, 4) ) )
 
+val hm = hiddenMatrix(2, 4, data, centers)
+
+println(hm)
 
 //type Matrix = Array[Array[Float]]
 //
