@@ -1,4 +1,4 @@
-package com.avel.dna
+package course4
 
 import org.scalatest._
 

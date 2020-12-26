@@ -1,4 +1,4 @@
-package courser4.com.avel.dna
+package course4
 
 import org.scalatest.FlatSpec
 
