@@ -3,32 +3,38 @@ package course6
 object Runner extends App {
   import  DnaMutation._
 
-  val data = scala.io.Source
-    .fromFile("/Users/pavel/devcore/sources/dna-analysis/src/test/resources/data/triematch.txt")
-    .getLines().toList
-
+//  val data = scala.io.Source
+//    .fromFile("/Users/pavel/devcore/sources/dna-analysis/src/test/resources/data/triematch.txt")
+//    .getLines().toList
 //  val input = List("ATCG", "GGGT")
 //  val text = "AATCGGGTTCAATCGGGGT"
-  val text = data.head
-
-  implicit val trie = createTrie(data.tail)
+// val text = data.head
+//  implicit val trie = createTrie(data.tail)
 
   //println(formattedPrint)
+  val text2 = "TTGAATGACTCCTATAACGAACTTCGACATGGCA$"
 
-  val slides = slideText( (text, 0), List.empty)
+  val slides = slideText( (text2, 0), List.empty)
+  println(slides.map(_._1).mkString("\n"))
+  implicit val trie = createTrie(slides.tail.map(_._1))
+  //println(formattedPrint)
+
+  println( countLeaves(trie) )
+
+
   //println(slides)
-  val slides2 = List(("GGGT",15))
+  //val slides2 = List(("GGGT",15))
 
   val res = slides
     .map( prefixTrieMatching(_, trie))
     .filter(_.isDefined)
 
-  println( res
-    .map(s => s.map(_._2))
-    .filter(_.isDefined)
-    .map(_.get)
-    .mkString(" ")
-  )
+//  println( res
+//    .map(s => s.map(_._2))
+//    .filter(_.isDefined)
+//    .map(_.get)
+//    .mkString(" ")
+//  )
 
   //val actual = prefixTrieMatching(text, trie)
   //println(actual)

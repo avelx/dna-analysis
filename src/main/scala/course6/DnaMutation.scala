@@ -80,4 +80,12 @@ object DnaMutation {
   } else {
     acc
   }
+
+  def countLeaves(current: Node) : Int = {
+    current.children.foldLeft(0)( (c, p) =>
+      if (p._2.children.size > 0) c + p._2.children.map(e => countLeaves(e._2) ).sum
+      else 1
+    )
+  }
+
 }
