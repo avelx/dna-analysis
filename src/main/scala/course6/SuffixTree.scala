@@ -39,10 +39,10 @@ object SuffixTree {
     root
   }
 
-  def slideText(input: String, acc: List[String] = List.empty): List[String] =
-  if (input.length > 1) {
-    slideText(input.tail, acc :+ input)
-
+  type Pair = (String, List[Int])
+  def slideText(input: Pair, acc: List[Pair] = List.empty): List[Pair] =
+  if (input._1.length >= 1) {
+    slideText( (input._1.tail, input._2.tail), acc :+ input)
   } else {
     acc
   }
