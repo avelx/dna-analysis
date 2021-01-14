@@ -3,6 +3,11 @@ package course6
 object Runner extends App {
   import  DnaMutation._
 
+  val input = List("band","canary","danny", "cane")
+  implicit val trie : Node = DnaMutation.createTrie(input)
+  println(formattedPrint)
+  sys.exit(0)
+
 //  val data = scala.io.Source
 //    .fromFile("/Users/pavel/devcore/sources/dna-analysis/src/test/resources/data/triematch.txt")
 //    .getLines().toList
@@ -16,17 +21,17 @@ object Runner extends App {
 
   val slides = slideText( (text2, 0), List.empty)
   println(slides.map(_._1).mkString("\n"))
-  implicit val trie = createTrie(slides.tail.map(_._1))
+  implicit val trie2 = createTrie(slides.tail.map(_._1))
   //println(formattedPrint)
 
-  println( countLeaves(trie) )
+  println( countLeaves(trie2) )
 
 
   //println(slides)
   //val slides2 = List(("GGGT",15))
 
   val res = slides
-    .map( prefixTrieMatching(_, trie))
+    .map( prefixTrieMatching(_, trie2))
     .filter(_.isDefined)
 
 //  println( res

@@ -1,11 +1,10 @@
 package course6
 
-import course6.DnaMutation.formattedPrint
 
 import scala.collection.immutable.List
 import scala.collection.mutable
 
-object SuffixTrie {
+object SuffixTree {
 
   var totalIndex = 1
 
@@ -40,17 +39,37 @@ object SuffixTrie {
     root
   }
 
-  def slideText(input: String, acc: List[String] = List.empty): List[String] = if (input.length > 1) {
+  def slideText(input: String, acc: List[String] = List.empty): List[String] =
+  if (input.length > 1) {
     slideText(input.tail, acc :+ input)
+
   } else {
     acc
   }
 
   def formattedPrint(implicit trie: Node): String = {
+//        trie
+//          .children
+//          .map(c => s"${c._1}").mkString("") +
+//          trie.children.map(kv => formattedPrint(kv._2)).mkString("\n")
     trie
       .children
       .map(c => s"\n${trie.index}->${c._2.index}:${c._1}").mkString("") +
       trie.children.map(kv => formattedPrint(kv._2)).mkString("")
   }
 
+//  def getAllTree(text: String): List[String] = {
+//    for {
+//      tree <- slideText(text)
+//      res = if (tree.length == 1)
+//        List(tree)
+//      else
+//        getAllTree(tree.tail)
+//    } yield res
+//  }
+
+  /*
+  "AAATG$", "AAATG$", "G$", "T", "ATG$", "TG$", "A", "A", , "G$", "T", "G$", "$"
+  "TAAATG$",  "ATAAATG$", "AATG$", "AAATG$", "G$", "ATG$", "TG$", "$")
+   */
 }
