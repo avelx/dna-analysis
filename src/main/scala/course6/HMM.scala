@@ -7,7 +7,7 @@ object HMM {
 
   def format(res: Double) : BigDecimal =
     BigDecimal(res)
-      .setScale(50, BigDecimal.RoundingMode.HALF_UP).toDouble
+      .setScale(15, BigDecimal.RoundingMode.HALF_UP).toDouble
 
   def probabilityOfHiddenPath(path : String)(transition: Map[String, Double] ): BigDecimal = {
     val prob = ListBuffer[Double]()
