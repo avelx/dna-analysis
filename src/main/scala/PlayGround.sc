@@ -1,119 +1,30 @@
-import course5.Cluster._
+import scala.collection.mutable.ListBuffer
 
-val data = Array( Point(Seq(2, 8)), Point( Seq(2, 5) ), Point( Seq(6, 9) ), Point( Seq( 7, 5) ), Point( Seq(5, 2) ) )
-val centers = Array( Point( Seq(3, 5) ), Point( Seq(5, 4) ) )
+val transition = Map[String, Double] (
+  "AA" -> 0.345,
+  "AB" -> 0.655,
+  "BA"-> 0.409,
+  "BB"-> 0.591
+)
 
-val hm = hiddenMatrix(2, 4, data, centers)
+val path = "ABAABABAABBBBBBBAAABABBABABBBBBBBAAABAAABAABBAABAB"
 
-println(hm)
+val prob = ListBuffer[Double]()
 
-//type Matrix = Array[Array[Float]]
-//
-//val A : Array[Array[Float]] = Array(
-//  Array(0, 17, 21, 31, 23),
-//  Array(17, 0, 30, 34, 21),
-//  Array(21, 30, 0, 28, 39),
-//  Array(31, 34, 28, 0, 43),
-//  Array(23, 21, 39, 43, 0)
-//)
-//
-//class MatrixExtension(matrix: Matrix) {
-//
-//
-//  private val size = matrix(0).length
-//
-//  def |-|(index: Int) : Matrix = {
-//    for {
-//        row <- matrix
-//      } yield row.take(index) ++ row.drop(index + 1)
-//  }
-//
-//  def -=(index: Int) : Matrix =
-//    matrix.zipWithIndex
-//      .filter( p => p._2 != index )
-//        .map(_._1)
-//
-////  case class P( element: Float, index: Int, foundIndex: Int )
-//  case class P( element: Float, coordinats: Option[(Int, Int)])
-//
-//
-//  def argmin : (Int, Int) = {
-//    //val p = matrix.flatten.foldLeft( P(Int.MaxValue,0, 0) )( (curr, e) =>
-//    //  if (e != 0.0F && curr.element > e) P(e, curr.index + 1, curr.index)
-//    //  else  P(curr.element, curr.index + 1, curr.foundIndex) )
-//    //p.foundIndex
-//    {
-//      for {
-//        x <- 0 to size - 1
-//        y <- 0 to size - 1
-//        if x < y
-//      } yield (x, y)
-//    }.foldLeft( P(Float.MaxValue, None) )(
-//      (curr, cord) =>
-//        if ( curr.element > matrix(cord._1)(cord._2).asInstanceOf[Float] )
-//          P( matrix(cord._1)(cord._2).asInstanceOf[Float], Some(cord) )
-//        else
-//          curr
-//    ).coordinats.get
-//  }
-//
-//  def printm =
-//    matrix.foreach(row => println( row.mkString("\t\t") ))
-//
-//  def avg(fromCol: Int, rowIndex: Int ) : Array[Float] = {
-//    matrix(rowIndex).drop(fromCol)
-//      .zip( matrix(rowIndex + 1).drop(fromCol) )
-//        .map( p => (p._1 + p._2) / 2 )
-//  }
-//
-//  def replace(fromCol: Int, rowIndex: Int ): Matrix = {
-//    val c = avg(fromCol, rowIndex)
-//    for {
-//      i <- fromCol to size - 1
-//    } yield {
-//      matrix(rowIndex + 1)(i) = c(i - fromCol)
-//      matrix(i)(rowIndex + 1) = c(i - fromCol)
-//    }
-//    matrix
-//  }
-//
-//  def merge(baseIndex: Int = 0, withIndex: Int = 0, level: Int = 0) : Matrix = {
-//    if (size != 3) {
-//      val newDist = matrix(baseIndex).map(e => e * level)
-//        .zip(matrix(withIndex))
-//        .map(p => (p._1 + p._2) / (level + 1))
-//
-//      for {
-//        i <- 1 to size - 1
-//      } yield {
-//        matrix(baseIndex)(i) = newDist(i)
-//        matrix(i)(baseIndex) = newDist(i)
-//      }
-//      matrix
-//    } else {
-//      val x = matrix(0).drop(1).sum / 2
-//      Array(
-//        Array(0F, x),
-//        Array(x, 0F)
-//      )
-//    }
-//  }
-//
-//}
-//
-//implicit def matrixToMatrixExtension(m: Matrix) = new MatrixExtension(m)
-//
-//var level = 1
-//A.printm
-//val am = A argmin
-//val B = (( A merge(am._1, am._2, level) ) |-| am._2 ) -= am._2
-//B.printm
-//
-//level += 1
-//val am2 = B argmin
-//val C = ( (B merge (am2._1, am2._2, level) ) |-| am2._2 ) -= am2._2
-//C.printm
-//
-//val am3 = C argmin
-//val D = ( ( C merge() ) |-| am3._2 ) -= am3._2
-//D.printm
+path
+  .tail
+  .fold( path.head ){ (acc, curr) =>
+    val v = List(acc, curr).mkString("")
+    println(v)
+    prob.append(  transition(v) )
+    curr
+  }
+
+def formatRes(res: Double) : BigDecimal =
+  BigDecimal(res)
+    .setScale(50, BigDecimal.RoundingMode.HALF_UP).toDouble
+
+println(prob)
+val res = prob
+  .foldLeft(0.5D){ (acc, curr) => acc * curr }
+println( formatRes(res) )

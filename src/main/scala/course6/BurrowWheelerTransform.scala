@@ -1,21 +1,36 @@
 package course6
 
-import course6.BarrowRunner.in2Enc
-
 import scala.collection.mutable.ListBuffer
-
 
 object BurrowWheelerTransform {
 
+  def suffixArray(in: String) : List[Int] = {
+    val res = {
+      for {
+        r <- 0 to in.length - 1
+      } yield in
+        .reverse
+        .substring(0, r + 1)
+        .reverse
+    }.toList
 
-   def shiftRight(in : String ) : String = {
-    (in.last +: in.init).mkString("")
+    println( res )
+    val r2 = in
+      .zipWithIndex
+      .map(_._2).reverse
+      .zip(res)
+
+    println(r2)
+
+    r2
+      .sortBy(_._2)
+      .map(_._1)
+      .toList
   }
 
-   def shiftLeft(in : String ) : String = {
+  private def shiftLeft(in : String ) : String = {
     ( in.tail ++ List(in.head)).mkString("")
   }
-
 
   def transform(in: String) : String = {
     val buff = ListBuffer[String]()
@@ -34,7 +49,7 @@ object BurrowWheelerTransform {
       .mkString("")
   }
 
-  def transformBack(encode: String) : Unit = {
+  def transformBack(encode: String) : String = {
     val head = encode.sorted.zipWithIndex
     val last = encode.zipWithIndex
 
@@ -78,6 +93,25 @@ object BurrowWheelerTransform {
     }
 
     val res = reconstruct(headCharOccurance.head._1._1, headCharOccurance.head._2, List() )
-    println( res.mkString(""))
+    res.reverse.mkString("")
+  }
+
+  def compress(in: String, sc: Char) : String = {
+    val res = ListBuffer[String]()
+    var counter = 0
+    in.foldLeft(sc){ (acc, c) =>
+      if (c == acc) {
+        counter += 1
+        c
+      } else {
+        if (counter == 1)
+          res.append(s"$acc")
+        else
+          res.append(s"$counter$acc")
+        counter = 1
+        c
+      }
+    }
+    res.mkString("")
   }
 }
