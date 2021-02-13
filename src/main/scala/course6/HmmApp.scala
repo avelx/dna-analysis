@@ -3,39 +3,27 @@ package course6
 object HmmApp extends App {
   import HMM._
 
-//  val transition = Map[String, Double] (
-//    "AA" -> 0.345,
-//    "AB" -> 0.655,
-//    "BA"-> 0.409,
-//    "BB"-> 0.591
-//  )
-//
-//  val path = "ABAABABAABBBBBBBAAABABBABABBBBBBBAAABAAABAABBAABAB"
-//
-//  val res = probabilityOfHiddenPath(path)(transition)
-//  println(res)
-
-  val emitted = "yxzyyxyzyyxyyyxxxxxxyyzxyyyzzxxxxyzyyxxxxzyzxxyzzy"
-  val path = "ABBBBAAAABBAAAABBAABBABAAABAABAABABABAABBAAABABAAB"
-
-  /*
-	x	y	z
-A	0.116	0.838	0.046
-B	0.359	0.13	0.511
-
-   */
+  val transition = Map[String, Double] (
+    "AA" -> 0.641,
+    "AB" -> 0.359,
+    "BA"-> 0.729,
+    "BB"-> 0.271
+  )
 
   val emissionMatrix = Map[String, Double] (
-    "AX" -> 0.116		,
-    "AY" -> 0.838,
-    "AZ" -> 0.046,
+    "AX" -> 0.117,
+    "AY" -> 0.691,
+    "AZ" -> 0.192,
 
-    "BX" -> 0.359	,
-    "BY" -> 	0.13,
-    "BZ" -> 0.511
+    "BX" -> 0.097,
+    "BY" -> 0.42,
+    "BZ" -> 0.483
 
   )
-  implicit val accuracy = 50
-  val res = probabilityOfOutcomeForHiddenPath(emitted, path)(emissionMatrix)
-  println(res)
+  val input = "xyxzzxyxyy"
+  val expected = "AAABBAAAAA"
+  val states = List("A", "B")
+  val actual = viterby(input)(transition, emissionMatrix, states)
+
+  println(actual)
 }

@@ -1,6 +1,7 @@
 package course6
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 //HiddenMarkovModels
 object HMM {
@@ -38,5 +39,23 @@ object HMM {
     BigDecimal(res)
   }
 
+  def viterby(in: String)
+             (stateTransition: Map[String, Double],
+              emissionMatrix: Map[String, Double],
+              states: List[String]) : String = {
+    val res = ListBuffer[String]()
+    in.foldLeft(""){ (prev, curr) =>
+      val k : Double = Try(
+        stateTransition( List(prev, curr).mkString(""))
+      ).toOption.getOrElse(1D)
 
+      val ls = states.map(state => (state,
+        k * emissionMatrix( List(state, curr)
+          .mkString("").toUpperCase ) ) )
+      val mx = ls.maxBy(_._2)
+      res.append(mx._1)
+      mx._1
+    }
+    res.mkString("")
+  }
 }
