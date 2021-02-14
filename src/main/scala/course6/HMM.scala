@@ -1,5 +1,6 @@
 package course6
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -39,23 +40,67 @@ object HMM {
     BigDecimal(res)
   }
 
-  def viterby(in: String)
-             (stateTransition: Map[String, Double],
-              emissionMatrix: Map[String, Double],
+  def viterbi(in: String)
+             (transition: Map[String, Double],
+              emission: Map[String, Double],
               states: List[String]) : String = {
-    val res = ListBuffer[String]()
-    in.foldLeft(""){ (prev, curr) =>
-      val k : Double = Try(
-        stateTransition( List(prev, curr).mkString(""))
-      ).toOption.getOrElse(1D)
 
-      val ls = states.map(state => (state,
-        k * emissionMatrix( List(state, curr)
-          .mkString("").toUpperCase ) ) )
-      val mx = ls.maxBy(_._2)
-      res.append(mx._1)
-      mx._1
-    }
-    res.mkString("")
+    val matrix  = Array.ofDim[Double](in.length,states.length)
+    val back_pointer = Array.ofDim[Int](in.length,states.length)
+
+    // initialise
+    (0 to in.length - 1).foreach(i => {
+      states.zipWithIndex.foreach(jp => {
+        matrix(i)(0) = emission( List(jp._1, "X").mkString("") )
+      })
+    })
+
+    // core calculations
+    (1 to in.length - 1).foreach( t => {
+
+      (0 to states.length - 1).foreach(s => {
+        matrix(t)(s) = matrix(t - 1)(0) *
+          transition( List("A", states(s) ).mkString("") ) *
+            emission( List( states(s), in(t) ).mkString("").toUpperCase() )
+
+        (1 to states.length - 1).foreach(ps => {
+          if ( matrix(t - 1)(ps) *
+                transition( List(states(ps), states(s) ).mkString("") ) *
+                  emission( List( states(s), in(t) ).mkString("").toUpperCase() ) > matrix(t)(s) ){
+              // set matrix and back_pointers
+              matrix(t)(s) = matrix(t - 1)(ps) *
+                transition( List(states(ps), states(s) ).mkString("") ) *
+                  emission( List( states(s), in(t) ).mkString("").toUpperCase() )
+            back_pointer(t)(s) = ps
+          }
+        })
+
+      })
+
+    })
+
+    var best_path_prob = matrix(in.length - 1)(0)
+    var best_final_state = 0
+    (0 to states.length - 1).foreach(s => {
+      if ( matrix( in.length - 1)(s) > best_path_prob) {
+        best_path_prob = matrix( in.length - 1)(s)
+        best_final_state = s
+      }
+    })
+
+    val res = ListBuffer[String]()
+    var current_state : Int = best_final_state
+    (0 to in.length - 1)
+      .reverse
+      .foreach(t => {
+        current_state = back_pointer(t)(current_state)
+        res.append( states(current_state) )
+    })
+
+    val f = res
+      .reverse
+      .mkString("")
+
+   f.tail :+ f.head
   }
 }

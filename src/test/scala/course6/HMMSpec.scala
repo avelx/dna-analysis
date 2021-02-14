@@ -66,7 +66,7 @@ class HMMSpec extends FlatSpec {
     val states = List("A", "B")
     val input = "xyxzzxyxyy"
     val expected = "AAABBAAAAA"
-    val actual = viterby(input)(transition, emissionMatrix, states)
+    val actual = viterbi(input)(transition, emissionMatrix, states)
     assert(expected === actual)
   }
 
