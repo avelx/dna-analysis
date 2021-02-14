@@ -45,7 +45,7 @@ class HMMSpec extends FlatSpec {
     assert(actual == 0.0000035974895474624624)
   }
 
-  "return path that maximizes probability" should " ???" in {
+  "return path that maximizes probability" should " return expected result - CASE 1" in {
     val transition = Map[String, Double] (
       "AA" -> 0.641,
       "AB" -> 0.359,
@@ -66,6 +66,39 @@ class HMMSpec extends FlatSpec {
     val states = List("A", "B")
     val input = "xyxzzxyxyy"
     val expected = "AAABBAAAAA"
+    val actual = viterbi(input)(transition, emissionMatrix, states)
+    assert(expected === actual)
+  }
+
+  "return path that maximizes probability" should " return expected result - CASE 2" in {
+    val transition = Map[String, Double] (
+      "AA" -> 0.7,
+      "AB" -> 0.5,
+      "AC"-> 1.0,
+
+      "BA" -> 0.1,
+      "BB" -> 0.3,
+      "BC"-> 0.0,
+
+      "CA" -> 0.2,
+      "CB" -> 0.2,
+      "CC"-> 0.0,
+    )
+
+    val emissionMatrix = Map[String, Double] (
+      "AX" -> 0.0,
+      "AY" -> 0.1,
+
+      "BX" -> 0.5,
+      "BY" -> 0.5,
+
+      "CX" -> 1.0,
+      "CY" -> 0.0
+
+    )
+    val states = List("A", "B", "C")
+    val input = "xx"
+    val expected = "BC"
     val actual = viterbi(input)(transition, emissionMatrix, states)
     assert(expected === actual)
   }
