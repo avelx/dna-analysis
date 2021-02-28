@@ -5,6 +5,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 //HiddenMarkovModels
+// https://github.com/chansonzhang/FirstNLP/blob/fcaedee100046e823b102b9c4e002169278178d4/algorithm/viterbi_algorithm.py
 object HMM {
 
   def format(res: Double)(implicit accuracy: Int) : BigDecimal =
@@ -41,36 +42,37 @@ object HMM {
   }
 
   def viterbi(in: String)
-             (transition: Map[String, Double],
-              emission: Map[String, Double],
-              states: List[String]) : String = {
+             (ts: Map[String, Double],
+              es: Map[String, Double],
+              ss: List[String],
+              abc: List[String]) : String = {
 
-    val matrix  = Array.ofDim[Double](in.length,states.length)
-    val back_pointer = Array.ofDim[Int](in.length,states.length)
+    val mx  = Array.ofDim[BigDecimal](in.length,ss.length)
+    val back_pointer = Array.ofDim[Int](in.length,ss.length)
 
     // initialise
-    (0 to in.length - 1).foreach(i => {
-      states.zipWithIndex.foreach(jp => {
-        matrix(i)(0) = emission( List(jp._1, "X").mkString("") )
-      })
+    ss.zipWithIndex.foreach(sz => {
+      mx(0)(sz._2) =
+        BigDecimal(es(List(sz._1, abc.head).mkString("")))
+      back_pointer(0)(sz._2) = 0
     })
 
     // core calculations
     (1 to in.length - 1).foreach( t => {
 
-      (0 to states.length - 1).foreach(s => {
-        matrix(t)(s) = matrix(t - 1)(0) *
-          transition( List("A", states(s) ).mkString("") ) *
-            emission( List( states(s), in(t) ).mkString("").toUpperCase() )
+      (0 to ss.length - 1).foreach(s => {
+        mx(t)(s) = mx(t - 1)(0) *
+          BigDecimal( ts( List( ss.head, ss(s) ).mkString("") ) ) *
+           BigDecimal(es( List( ss(s), in(t) ).mkString("").toUpperCase() ) )
 
-        (1 to states.length - 1).foreach(ps => {
-          if ( matrix(t - 1)(ps) *
-                transition( List(states(ps), states(s) ).mkString("") ) *
-                  emission( List( states(s), in(t) ).mkString("").toUpperCase() ) > matrix(t)(s) ){
-              // set matrix and back_pointers
-              matrix(t)(s) = matrix(t - 1)(ps) *
-                transition( List(states(ps), states(s) ).mkString("") ) *
-                  emission( List( states(s), in(t) ).mkString("").toUpperCase() )
+        (1 to ss.length - 1).foreach(ps => {
+          if ( mx(t - 1)(ps) *
+                BigDecimal( ts( List(ss(ps), ss(s) ).mkString("") ) ) *
+                  BigDecimal( es( List( ss(s), in(t) ).mkString("").toUpperCase() ) )  > mx(t)(s) ){
+              // set mx and back_pointers
+           mx(t)(s) = mx(t - 1)(ps) *
+                BigDecimal(ts( List(ss(ps), ss(s) ).mkString("") ) ) *
+                  BigDecimal( es( List( ss(s), in(t) ).mkString("").toUpperCase() ) )
             back_pointer(t)(s) = ps
           }
         })
@@ -79,28 +81,29 @@ object HMM {
 
     })
 
-    var best_path_prob = matrix(in.length - 1)(0)
+    var best_path_prob = mx(in.length - 1)(0)
     var best_final_state = 0
-    (0 to states.length - 1).foreach(s => {
-      if ( matrix( in.length - 1)(s) > best_path_prob) {
-        best_path_prob = matrix( in.length - 1)(s)
+    (0 to ss.length - 1).foreach(s => {
+      if ( mx( in.length - 1)(s) > best_path_prob) {
         best_final_state = s
+        best_path_prob = mx( in.length - 1)(s)
       }
     })
 
-    val res = ListBuffer[String]()
+
+    val res = ListBuffer[String]( ss(best_final_state) )
     var current_state : Int = best_final_state
     (0 to in.length - 1)
       .reverse
       .foreach(t => {
         current_state = back_pointer(t)(current_state)
-        res.append( states(current_state) )
+        res.append( ss(current_state) )
     })
 
     val f = res
       .reverse
       .mkString("")
 
-   f.tail :+ f.head
+     f.tail
   }
 }
