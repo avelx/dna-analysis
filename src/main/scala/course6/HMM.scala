@@ -129,7 +129,6 @@ object HMM {
     (1 to obs.length - 1)
       .map(t => {
         var newPath = mutable.Map[String, List[String]]()
-
         states
           .map(y => {
             val (prob, state) = states.map(y0 => {
@@ -144,7 +143,6 @@ object HMM {
     val (prob, state) = states.map(y => {
       ( V( obs.length - 1)(y), y )
     }).maxBy(_._1)
-
 
     (prob, path(state).mkString("") )
   }
