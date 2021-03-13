@@ -2,7 +2,6 @@ package course6
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
 
 //HiddenMarkovModels
 // https://github.com/chansonzhang/FirstNLP/blob/fcaedee100046e823b102b9c4e002169278178d4/algorithm/viterbi_algorithm.py
@@ -117,10 +116,9 @@ object HMM {
               states: List[String],
               startP: Map[String, Double],
               abc: List[String]) : (Double, String) = {
-
+    // Initialise
     val V = Array.fill(obs.length)( mutable.Map[String, Double]() )
     var path = mutable.Map[String, List[String]]()
-
     states.map(s => {
       V(0)(s) = startP(s) * emittedP( s"$s${obs(0)}" )
       path = path + (s -> List(s))
@@ -131,20 +129,25 @@ object HMM {
         var newPath = mutable.Map[String, List[String]]()
         states
           .map(y => {
-            val (prob, state) = states.map(y0 => {
+            states.map(y0 => {
               (V(t - 1)(y0) * transP(s"$y0$y") * emittedP(s"$y${obs(t)}"), y0)
-            }).maxBy(_._1)
-            V(t)(y) = prob
-            newPath = newPath + (y -> (path(state) :+ y) )
+            }).maxBy(_._1) match {
+              case (prob, state) =>
+                V(t)(y) = prob
+                newPath = newPath + (y -> (path(state) :+ y) )
+            }
         })
         path = newPath
       })
 
-    val (prob, state) = states.map(y => {
-      ( V( obs.length - 1)(y), y )
-    }).maxBy(_._1)
-
-    (prob, path(state).mkString("") )
+    states.map(state => {
+      ( V( obs.length - 1)(state), state )
+    }).maxBy(_._1) match {
+      case (prob, state) =>
+        (prob, path(state).mkString("") )
+      case _ =>
+        throw new Error("Incorrect case")
+    }
   }
 
 }
