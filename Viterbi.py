@@ -4,21 +4,21 @@
 ############  START MODIFICATIONS HERE  ############
 ####################################################
 
-states = ('Fair', 'Biased')
+states = ('E', 'D1', 'D2', 'I', 'A1', 'A2')
 
 # THHHH -> TTHHH
-observations = ('tails', 'tails', 'heads', 'heads', 'heads')
+observations = ('heads', 'tails', 'heads')
 
-start_probability = {'Fair': 0.50, 'Biased': 0.50}
+start_probability = {'Fair': 0.857, 'Biased': 0.142}
 
 transition_probability = {
-    'Fair' : {'Fair': 0.90, 'Biased': 0.10},
-    'Biased' : {'Fair': 0.10, 'Biased': 0.90}
+    'Fair' : {'Fair': 0.533, 'Biased': 0.466},
+    'Biased' : {'Fair': 0.60, 'Biased': 0.40}
 }
 
 emission_probability = {
-    'Fair' : {'heads': 0.50, 'tails': 0.50},
-    'Biased' : {'heads': 0.75, 'tails': 0.25}
+    'Fair' : {'heads': 0.857, 'tails': 0.533},
+    'Biased' : {'heads': 0.142, 'tails': 0.466}
 }
 
 ###################################################

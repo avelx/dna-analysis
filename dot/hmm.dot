@@ -1,0 +1,29 @@
+digraph HMM {
+ source -> Exon;
+ source -> Donor1;
+ source -> Donor2;
+ source -> Intron;
+ source -> Acceptor1;
+ source -> Acceptor2;
+
+ Exon -> Exon;
+ Exon -> Donor1;
+
+ Donor1 -> Donor2;
+
+ Donor2 -> Intron;
+
+ Intron -> Intron;
+ Intron -> Acceptor1;
+
+ Acceptor1 -> Acceptor2;
+
+ Acceptor2 -> Exon;
+
+ Exon      ->  sink;
+ Donor1    ->  sink;
+ Donor2    ->  sink;
+ Intron    ->  sink;
+ Acceptor1 ->  sink;
+ Acceptor2 ->  sink;
+}

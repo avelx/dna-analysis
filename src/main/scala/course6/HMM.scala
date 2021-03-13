@@ -45,7 +45,7 @@ object HMM {
              (ts: Map[String, Double],
               es: Map[String, Double],
               ss: List[String],
-              abc: List[String]) : String = {
+              abc: List[String])(implicit debug: Boolean = false) : String = {
 
     val mx  = Array.ofDim[BigDecimal](in.length,ss.length)
     val back_pointer = Array.ofDim[Int](in.length,ss.length)
@@ -100,10 +100,53 @@ object HMM {
         res.append( ss(current_state) )
     })
 
+    if (debug){
+      back_pointer.foreach(row => println(row.mkString(" ")))
+    }
+
     val f = res
       .reverse
       .mkString("")
 
      f.tail
   }
+
+  def viterbi2(obs: String)
+             (transP: Map[String, Double],
+              emittedP: Map[String, Double],
+              states: List[String],
+              startP: Map[String, Double],
+              abc: List[String]) : (Double, String) = {
+
+    val V = Array.fill(obs.length)( mutable.Map[String, Double]() )
+    var path = mutable.Map[String, List[String]]()
+
+    states.map(s => {
+      V(0)(s) = startP(s) * emittedP( s"$s${obs(0)}" )
+      path = path + (s -> List(s))
+    })
+
+    (1 to obs.length - 1)
+      .map(t => {
+        var newPath = mutable.Map[String, List[String]]()
+
+        states
+          .map(y => {
+            val (prob, state) = states.map(y0 => {
+              (V(t - 1)(y0) * transP(s"$y0$y") * emittedP(s"$y${obs(t)}"), y0)
+            }).maxBy(_._1)
+            V(t)(y) = prob
+            newPath = newPath + (y -> (path(state) :+ y) )
+        })
+        path = newPath
+      })
+
+    val (prob, state) = states.map(y => {
+      ( V( obs.length - 1)(y), y )
+    }).maxBy(_._1)
+
+
+    (prob, path(state).mkString("") )
+  }
+
 }

@@ -1,0 +1,1 @@
+dot -Tpng hmm.dot > output.png
