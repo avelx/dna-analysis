@@ -5,48 +5,47 @@ object HmmApp extends App {
 
   // Enter left to right
   val transition = Map[String, Double] (
-    "EE" -> 0.85,
-    "ED1" -> 0.15,
-    "ED2"-> 0.0,
-    "EI"-> 0.0,
-    "EA1" -> 0.0,
-    "EA2"-> 0.0,
+    // + -
+    "A+A-"-> 0.180,
+    "A+C-" -> 0.268,
+    "A+G-" -> 0.430,
+    "A+T-" -> 0.122,
 
-    "D1E" -> 0.0,
-    "D1D1" -> 0.0,
-    "D1D2"-> 1.0,
-    "D1I"-> 0.0,
-    "D1A1" -> 0.0,
-    "D1A2"-> 0.0,
+    "C+A-"-> 0.191,
+    "C+C-" -> 0.299,
+    "C+G-" -> 0.299,
+    "C+T-" -> 0.211,
 
-    "D2E" -> 0.0,
-    "D2D1" -> 0.0,
-    "D2D2"-> 0.0,
-    "D2I"-> 1.0,
-    "D2A1" -> 0.0,
-    "D2A2"-> 0.0,
+    "G+A-"-> 0.161,
+    "G+C-" -> 0.346,
+    "G+G-" -> 0.373,
+    "G+T-" -> 0.120,
 
-    "IE" -> 0.0,
-    "ID1" -> 0.0,
-    "ID2"-> 0.0,
-    "II"-> 0.9,
-    "IA1" -> 0.1,
-    "IA2"-> 0.0,
+    "T+A-"-> 0.082,
+    "T+C-" -> 0.357,
+    "T+G-" -> 0.391,
+    "T+T-" -> 0.170,
 
-    "A1E" -> 0.0,
-    "A1D1" -> 0.0,
-    "A1D2"-> 0.0,
-    "A1I"-> 0.0,
-    "A1A1" -> 0.0,
-    "A1A2"-> 1.0,
+    // - +
+    "A-A+"-> 0.300,
+    "A-C+" -> 0.200,
+    "A-G+" -> 0.290,
+    "A-T+" -> 0.210,
 
-    "A2E" -> 1.0,
-    "A2D1" -> 0.0,
-    "A2D2"-> 0.0,
-    "A2I"-> 0.0,
-    "A2A1" -> 0.0,
-    "A2A2"-> 0.0
+    "C-A+"-> 0.319,
+    "C-C+" -> 0.300,
+    "C-G+" -> 0.081,
+    "C-T+" -> 0.300,
 
+    "G-A+"-> 0.251,
+    "G-C+" -> 0.251,
+    "G-G+" -> 0.299,
+    "G-T+" -> 0.199,
+
+    "T-A+"-> 0.176,
+    "T-C+" -> 0.242,
+    "T-G+" -> 0.291,
+    "T-T+" -> 0.291,
   )
 
   val emissionMatrix = Map[String, Double] (
@@ -82,12 +81,14 @@ object HmmApp extends App {
   )
 
   val startProbabilities = Map[String, Double] (
-    "E"-> 0.5,
-    "D1" -> 0.0,
-    "D2" -> 0.0,
-    "I" -> 0.5,
-    "A1" -> 0.0,
-    "A2" -> 0.0
+    "A+"-> 0.125,
+    "C+" -> 0.125,
+    "G+" -> 0.125,
+    "T+" -> 0.125,
+    "A-" -> 0.125,
+    "C-" -> 0.125,
+    "G-" -> 0.125,
+    "T-" -> 0.125
   )
 
   implicit val debug = true
@@ -95,13 +96,14 @@ object HmmApp extends App {
   val input = "ATGGCCCGAACCAAGCAGACTGCGCGCAAGTCAACGGGTGGCAAGGCGCCGCGCAAGCAGCTGGCCACCAAGGTGGCTCGCAAGAGCGCACCTGCCACTGGCGGCGTGAAGAAGCCGCACCGCTACCGGCCCGGCACGGTGGCGCTTCGCGAGATCCGCCGCTACCAGAAGTCCACTGAGCTGCTAATCCGCAAGTTGCCCTTCCAGCGGCTGATGCGCGAGATCGCTCAGGACTTTAAGACCGACCTGCGCTTCCAGAGCTCGGCCGTGATGGCGCTGCAGGAGGCGTGCGAGTCTTACCTGGTGGGGCTGTTTGAGGACACCAACCTGTGTGTCATCCATGCCAAACGGGTCACCATCATGCCTAAGGACATCCAGCTGGCACGCCGTATCCGCGGGGAGCGGGCCTAGGAGGGCTATCTCGCCACCTGAGAGGTTGCGCAACGTTCACCCCAAAGGCTCTTTTAAGAGCCACCCACCT"
 
   val expected = "FFF"
-  val states = List("E", "D1", "D2", "I", "A1", "A2")
+  val states = List("A+", "C+", "G+", "T+", "A-", "C-", "G-", "T-")
   val alphabet = List("A", "C", "G", "T")
   val actual = viterbi2(input)(transition, emissionMatrix, states, startProbabilities, alphabet)
 
   val res = actual._2
   println(res)
   println( res.filter(c => c == 'I').length)
+
   //println()
   //println(actual._2)
   //println(expected)
