@@ -72,4 +72,8 @@ object SuffixTree {
   "AAATG$", "AAATG$", "G$", "T", "ATG$", "TG$", "A", "A", , "G$", "T", "G$", "$"
   "TAAATG$",  "ATAAATG$", "AATG$", "AAATG$", "G$", "ATG$", "TG$", "$")
    */
+
+
+  def proto(in: String): List[String] = ???
+
 }
