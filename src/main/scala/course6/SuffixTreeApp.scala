@@ -1,7 +1,32 @@
 package course6
 
+import scala.collection.mutable
+
 object SuffixTreeApp extends App  {
   import SuffixTreeAdvance._
+
+  val input =
+    """
+      |1 -> 2
+      |2 -> 3
+      |3 -> 4,5
+      |6 -> 7
+      |7 -> 6
+      |""".stripMargin
+
+  val tr = convertToTrie(input)
+  val tree = maxNonBranching(tr)
+
+  val d = tree
+    .map(r => {
+      val l = r.map(e => List(e.f, e.t)).flatten
+      l
+        .toList
+        .mkString("->")
+    })
+  println(d.mkString("\n"))
+  sys.exit(0)
+
   val in = "ATAAATG$"
 
   // "panamabananas$"
